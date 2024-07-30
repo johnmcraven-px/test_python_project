@@ -11,8 +11,8 @@ transform = transforms.Compose([
 ])
 
 # Load the CIFAR-10 dataset
-trainset = torchvision.datasets.CIFAR10(root='../data/input', train=True, download=True, transform=transform)
-# testset = torchvision.datasets.CIFAR10(root='../data/input', train=False, download=True, transform=transform)
+trainset = torchvision.datasets.CIFAR10(root='/Volumes/git/cifar10/train', train=True, download=True, transform=transform)
+# testset = torchvision.datasets.CIFAR10(root='/Volumes/git/cifar10/test', train=False, download=True, transform=transform)
 
 
 with open('../data/run_params.json') as f:
