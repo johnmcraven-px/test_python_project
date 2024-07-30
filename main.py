@@ -9,3 +9,7 @@ def read_root():
 @app.get("/foo")
 def read_item():
     return {"test": "foo"}
+
+@app.get("/foo")
+def read_item():
+    return {"test": "bar"}
