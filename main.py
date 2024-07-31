@@ -4,7 +4,7 @@ import altair as alt
 import pandas as pd
 from vega_datasets import data
 import json
-from dashboardTypes import DashboardResponse, LayoutType
+from dashboardTypes import DashboardResponse, RowLayoutType, ComponentLayoutType, LayoutType
 
 source = data.cars()
 
@@ -21,14 +21,17 @@ app = FastAPI()
 def getLayout() -> LayoutType:
     return RowLayoutType(
         type="row",
+        className=None,
         content=[
             ComponentLayoutType(
+                className=None,
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "A"}
             ),
             ComponentLayoutType(
                 type="component",
+                className=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "B"}
             )
