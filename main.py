@@ -19,15 +19,15 @@ app = FastAPI()
 
 
 def getLayout() -> LayoutType:
-    return LayoutType(
+    return RowLayoutType(
         type="row",
         content=[
-            LayoutType(
+            ComponentLayoutType(
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "A"}
             ),
-            LayoutType(
+            ComponentLayoutType(
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "B"}
