@@ -1,39 +1,16 @@
 
 from pydantic import BaseModel
-from typing import Dict, List, Any, Union, Literal, Optional
-
-# export interface IRowLayout {
-#     type: "row"
-#     className?: string;
-#     content: ILayout[]
-# }
-
-# export interface IColLayout {
-#     type: "col"
-#     className?: string;
-#     content: ILayout[]
-# }
-
-# export interface IComponentLayout {
-#     type: "component"
-#     className?: string;
-#     // This will look up a React.FC<T>
-#     componentName: string;
-#     componentState: any
-# }
-
-# export type ILayout = IRowLayout | IColLayout | IComponentLayout;
-
+from typing import Dict, List, Any, Union, Literal, Optional, ForwardRef
 
 class RowLayoutType(BaseModel):
     type: Literal["row"]
     className: Optional[str]
-    content: List[LayoutType]
+    content: List['LayoutType']
 
 class ColLayoutType(BaseModel):
     type: Literal["col"]
     className: Optional[str]
-    content: List[LayoutType]
+    content: List['LayoutType']
 
 class ComponentLayoutType(BaseModel):
     type: Literal["component"]
@@ -41,8 +18,10 @@ class ComponentLayoutType(BaseModel):
     componentName: str
     componentState: Any
 
+LayoutType = Union[RowLayoutType, ColLayoutType, ComponentLayoutType]
 
-LayoutType = Union[ITypeA, ITypeB]
+RowLayoutType.update_forward_refs()
+ColLayoutType.update_forward_refs()
 
 
 class DashboardResponse(BaseModel):
