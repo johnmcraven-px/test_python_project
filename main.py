@@ -70,6 +70,6 @@ def read_root():
         tooltip=['Name', 'Origin', 'Horsepower', 'Miles_per_Gallon']
     ).interactive())
 
-    return DashboardResponse(goldenLayoutJsonStr=getLayout(), vegaSpecs=vegaSpecs)
+    return DashboardResponse(layout=getLayout(), vegaSpecs=vegaSpecs)
 
 
