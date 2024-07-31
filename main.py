@@ -26,14 +26,14 @@ def getLayout():
       "content": [
         {
           "type": "component",
-          "componentName": "VegaChart",
+          "componentName": "VegaLiteChart",
           "componentState": {
             "specId": "A"
           }
         },
         {
           "type": "component",
-          "componentName": "example",
+          "componentName": "VegaLiteChart",
           "componentState": {
             "specId": "B"
           }
