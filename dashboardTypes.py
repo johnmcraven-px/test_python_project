@@ -1,6 +1,6 @@
 
-from pydantic import BaseModel, Union, Literal, Optional
-from typing import Dict, List, Any
+from pydantic import BaseModel
+from typing import Dict, List, Any, Union, Literal, Optional
 
 # export interface IRowLayout {
 #     type: "row"
