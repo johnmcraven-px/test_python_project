@@ -20,8 +20,6 @@ app = FastAPI()
 
 def getLayout():
     return """{
-  "content": [
-    {
       "type": "row",
       "content": [
         {
@@ -39,9 +37,7 @@ def getLayout():
           }
         }
       ]
-    }
-  ]
-}"""
+    }"""
 
 @app.get("/initialize")
 def read_root():
