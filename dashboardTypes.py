@@ -28,12 +28,12 @@ from typing import Dict, List, Any, Union, Literal, Optional
 class RowLayoutType(BaseModel):
     type: Literal["row"]
     className: Optional[str]
-    content: List[ILayout]
+    content: List[LayoutType]
 
 class ColLayoutType(BaseModel):
     type: Literal["col"]
     className: Optional[str]
-    content: List[ILayout]
+    content: List[LayoutType]
 
 class ComponentLayoutType(BaseModel):
     type: Literal["component"]
