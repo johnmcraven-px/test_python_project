@@ -4,7 +4,7 @@ import altair as alt
 import pandas as pd
 from vega_datasets import data
 import json
-from dashboardTypes import DashboardResponse
+from dashboardTypes import DashboardResponse, LayoutType
 
 source = data.cars()
 
@@ -18,26 +18,22 @@ alt.Chart(source).mark_circle(size=60).encode(
 app = FastAPI()
 
 
-def getLayout():
-    return """{
-      "type": "row",
-      "content": [
-        {
-          "type": "component",
-          "componentName": "VegaLiteChart",
-          "componentState": {
-            "specId": "A"
-          }
-        },
-        {
-          "type": "component",
-          "componentName": "VegaLiteChart",
-          "componentState": {
-            "specId": "B"
-          }
-        }
-      ]
-    }"""
+def getLayout() -> LayoutType:
+    return LayoutType(
+        type="row",
+        content=[
+            LayoutType(
+                type="component",
+                componentName="VegaLiteChart",
+                componentState={"specId": "A"}
+            ),
+            LayoutType(
+                type="component",
+                componentName="VegaLiteChart",
+                componentState={"specId": "B"}
+            )
+        ]
+    )
 
 @app.get("/initialize")
 def read_root():
