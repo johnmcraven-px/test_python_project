@@ -55,9 +55,9 @@ def read_root():
     addChartSpec("A", alt.Chart(sourceA).mark_bar().encode(
         x='a',
         y='b'
-    ))
-    sourceB = data.cars()
+    )).interactive()
 
+    sourceB = data.cars()
     addChartSpec("B", alt.Chart(sourceB).mark_circle(size=60).encode(
         x='Horsepower',
         y='Miles_per_Gallon',
