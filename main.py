@@ -48,13 +48,14 @@ def read_root():
         vegaSpecs[key] = vega_lite_spec_str
 
     sourceA = pd.DataFrame({
-        'other': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+        'a': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
         'b': [28, 55, 43, 91, 81, 53, 19, 87, 52]
     })
 
     addChartSpec("A", alt.Chart(sourceA).mark_bar().encode(
-        x='other',
-        y='b'
+        x='a',
+        y='b',
+        tooltip=['a', 'b']
     ).interactive())
 
     sourceB = data.cars()
