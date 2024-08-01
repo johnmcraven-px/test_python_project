@@ -34,6 +34,12 @@ def getLayout() -> LayoutType:
                 className=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "B"}
+            ),
+            ComponentLayoutType(
+                type="component",
+                className=None,
+                componentName="HelloView",
+                componentState={"specId": "B"}
             )
         ]
     )
