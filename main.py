@@ -54,8 +54,7 @@ def read_root():
 
     addChartSpec("A", alt.Chart(sourceA).mark_bar().encode(
         x='a',
-        y='b',
-        tooltip=['a', 'b']
+        y='b'
     ).interactive())
 
     sourceB = data.cars()
