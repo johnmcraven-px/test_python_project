@@ -48,7 +48,7 @@ def read_root():
         vegaSpecs[key] = vega_lite_spec_str
 
     sourceA = pd.DataFrame({
-        'a': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+        'other': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
         'b': [28, 55, 43, 91, 81, 53, 19, 87, 52]
     })
 
