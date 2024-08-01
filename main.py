@@ -53,7 +53,7 @@ def read_root():
     })
 
     addChartSpec("A", alt.Chart(sourceA).mark_bar().encode(
-        x='a',
+        x='other',
         y='b'
     ).interactive())
 
