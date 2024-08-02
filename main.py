@@ -100,7 +100,7 @@ def getLayout() -> LayoutType:
                 style=None,
                 type="component",
                 componentName="VegaLiteChart",
-                componentState={"specId": "scatter_matrix", "autoScale": True}
+                componentState={"specId": "scatter_matrix"}
             ),
         ]
     )
