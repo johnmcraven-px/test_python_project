@@ -27,13 +27,13 @@ def getLayout() -> LayoutType:
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "performance_chart"}
+                componentState={"specId": "performance_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "failure_chart"}
+                componentState={"specId": "failure_chart", "autoScale": True}
             )
         ]
     )
@@ -45,19 +45,19 @@ def getLayout() -> LayoutType:
                 className=None,
                 type="component",
                 componentName="VegaLiteChart",
-                componentState={"specId": "pareto_chart"}
+                componentState={"specId": "pareto_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "comparison_chart_with_line"}
+                componentState={"specId": "comparison_chart_with_line", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "heatmap"}
+                componentState={"specId": "heatmap", "autoScale": True}
             )
         ]
     )
@@ -70,13 +70,13 @@ def getLayout() -> LayoutType:
                 className=None,
                 type="component",
                 componentName="VegaLiteChart",
-                componentState={"specId": "parallel_coordinates"}
+                componentState={"specId": "parallel_coordinates", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "spider_chart"}
+                componentState={"specId": "spider_chart", "autoScale": True}
             ),
         ]
     )
@@ -89,13 +89,13 @@ def getLayout() -> LayoutType:
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "pareto_line_chart"}
+                componentState={"specId": "pareto_line_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 className=None,
                 type="component",
                 componentName="VegaLiteChart",
-                componentState={"specId": "scatter_matrix"}
+                componentState={"specId": "scatter_matrix", "autoScale": True}
             ),
         ]
     )
