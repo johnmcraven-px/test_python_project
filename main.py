@@ -32,7 +32,7 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className=None,
-                componentName="HelloView",
+                componentName="VegaLiteChart",
                 componentState={"specId": "failure_chart"}
             )
         ]
@@ -56,7 +56,7 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className=None,
-                componentName="HelloView",
+                componentName="VegaLiteChart",
                 componentState={"specId": "heatmap"}
             )
         ]
@@ -88,7 +88,7 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className=None,
-                componentName="HelloView",
+                componentName="VegaLiteChart",
                 componentState={"specId": "pareto_line_chart"}
             ),
             ComponentLayoutType(
