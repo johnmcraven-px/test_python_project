@@ -21,17 +21,17 @@ app = FastAPI()
 def getLayout() -> LayoutType:
     row1 = RowLayoutType(
         type="row",
-        className=None,
+        className="items-stretch",
         content=[
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 componentName="VegaLiteChart",
                 componentState={"specId": "performance_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 componentName="VegaLiteChart",
                 componentState={"specId": "failure_chart", "autoScale": True}
             )
@@ -39,42 +39,42 @@ def getLayout() -> LayoutType:
     )
     row2 = RowLayoutType(
         type="row",
-        className=None,
+        className="items-stretch",
         content=[
             ComponentLayoutType(
-                className=None,
+                className="flex-1",
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "pareto_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 componentName="VegaLiteChart",
                 componentState={"specId": "comparison_chart_with_line", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 componentName="VegaLiteChart",
-                componentState={"specId": "heatmap", "autoScale": True}
+                componentState={"specId": "heatmap"}
             )
         ]
     )
 
     row3 = RowLayoutType(
         type="row",
-        className=None,
+        className="items-stretch",
         content=[
             ComponentLayoutType(
-                className=None,
+                className="flex-1",
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "parallel_coordinates", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 componentName="VegaLiteChart",
                 componentState={"specId": "spider_chart", "autoScale": True}
             ),
@@ -83,16 +83,16 @@ def getLayout() -> LayoutType:
 
     row4 = RowLayoutType(
         type="row",
-        className=None,
+        className="items-stretch",
         content=[
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 componentName="VegaLiteChart",
                 componentState={"specId": "pareto_line_chart", "autoScale": True}
             ),
             ComponentLayoutType(
-                className=None,
+                className="flex-1",
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "scatter_matrix", "autoScale": True}
