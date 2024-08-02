@@ -21,7 +21,8 @@ app = FastAPI()
 def getLayout() -> LayoutType:
     row1 = RowLayoutType(
         type="row",
-        className="items-stretch min-h-80",
+        className="items-stretch",
+        style={"minHeight": "400px"},
         content=[
             ComponentLayoutType(
                 type="component",
@@ -39,7 +40,8 @@ def getLayout() -> LayoutType:
     )
     row2 = RowLayoutType(
         type="row",
-        className="items-stretch min-h-80",
+        className="items-stretch",
+        style={"minHeight": "400px"},
         content=[
             ComponentLayoutType(
                 className="flex-1",
@@ -64,7 +66,8 @@ def getLayout() -> LayoutType:
 
     row3 = RowLayoutType(
         type="row",
-        className="items-stretch min-h-80",
+        className="items-stretch",
+        style={"minHeight": "400px"},
         content=[
             ComponentLayoutType(
                 type="component",
@@ -77,7 +80,8 @@ def getLayout() -> LayoutType:
 
     row4 = RowLayoutType(
         type="row",
-        className="items-stretch min-h-80",
+        className="items-stretch",
+        style={"minHeight": "400px"},
         content=[
             ComponentLayoutType(
                 type="component",
