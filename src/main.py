@@ -14,15 +14,15 @@ def getLayout() -> LayoutType:
         content=[
             ComponentLayoutType(
                 type="component",
-                className="flex-1",
-                style=None,
+                className=None,
+                style={"minHeight": "400"},
                 componentName="VegaLiteChart",
                 componentState={"specId": "primary_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
-                className="flex-1",
-                style=None,
+                className=None,
+                style={"minHeight": "400"},
                 componentName="VegaLiteChart",
                 componentState={"specId": "filtered_chart", "autoScale": True}
             )
