@@ -5,19 +5,19 @@ from typing import Dict, List, Any, Union, Literal, Optional, ForwardRef
 class RowLayoutType(BaseModel):
     type: Literal["row"]
     className: Optional[str]
-    style: Optional[Dict[str, str]]
+    style: Optional[Dict[str, str | int]]
     content: List['LayoutType']
 
 class ListLayoutType(BaseModel):
     type: Literal["list"]
     className: Optional[str]
-    style: Optional[Dict[str, str]]
+    style: Optional[Dict[str, str | int]]
     content: List['LayoutType']
 
 class ComponentLayoutType(BaseModel):
     type: Literal["component"]
     className: Optional[str]
-    style: Optional[Dict[str, str]]
+    style: Optional[Dict[str, str | int]]
     componentName: str
     componentState: Any
 
