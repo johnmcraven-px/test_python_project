@@ -151,7 +151,7 @@ def initialize():
         x='Batch:N',
         y='Value:Q',
         color='Metric:N',
-        tooltip=['Batch', 'Metric', 'Value']
+        tooltip=['Batch:N', 'Metric:N', 'Value:Q']
     ).properties(
         title='Batch-wise Performance Summary'
     )
