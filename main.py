@@ -21,7 +21,7 @@ app = FastAPI()
 def getLayout() -> LayoutType:
     row1 = RowLayoutType(
         type="row",
-        className="items-stretch",
+        className="items-stretch min-h-80",
         content=[
             ComponentLayoutType(
                 type="component",
@@ -39,7 +39,7 @@ def getLayout() -> LayoutType:
     )
     row2 = RowLayoutType(
         type="row",
-        className="items-stretch",
+        className="items-stretch min-h-80",
         content=[
             ComponentLayoutType(
                 className="flex-1",
@@ -54,6 +54,19 @@ def getLayout() -> LayoutType:
                 componentState={"specId": "comparison_chart_with_line", "autoScale": True}
             ),
             ComponentLayoutType(
+                className="flex-1",
+                type="component",
+                componentName="VegaLiteChart",
+                componentState={"specId": "parallel_coordinates", "autoScale": True}
+            ),
+        ]
+    )
+
+    row3 = RowLayoutType(
+        type="row",
+        className="items-stretch min-h-80",
+        content=[
+            ComponentLayoutType(
                 type="component",
                 className="flex-1",
                 componentName="VegaLiteChart",
@@ -62,28 +75,9 @@ def getLayout() -> LayoutType:
         ]
     )
 
-    row3 = RowLayoutType(
-        type="row",
-        className="items-stretch",
-        content=[
-            ComponentLayoutType(
-                className="flex-1",
-                type="component",
-                componentName="VegaLiteChart",
-                componentState={"specId": "parallel_coordinates", "autoScale": True}
-            ),
-            ComponentLayoutType(
-                type="component",
-                className="flex-1",
-                componentName="VegaLiteChart",
-                componentState={"specId": "spider_chart", "autoScale": True}
-            ),
-        ]
-    )
-
     row4 = RowLayoutType(
         type="row",
-        className="items-stretch",
+        className="items-stretch min-h-80",
         content=[
             ComponentLayoutType(
                 type="component",
