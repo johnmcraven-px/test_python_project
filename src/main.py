@@ -17,7 +17,7 @@ def getLayout() -> LayoutType:
                 className=None,
                 style={"minHeight": 400},
                 componentName="VegaLiteChart",
-                componentState={"specId": "primary_chart", "autoScale": True}
+                componentState={"specId": "primary_chart", "autoScale": True, "eventTypes": ["clicked_point"]}
             ),
             ComponentLayoutType(
                 type="component",
