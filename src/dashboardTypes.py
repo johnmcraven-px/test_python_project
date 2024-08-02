@@ -30,3 +30,10 @@ ListLayoutType.update_forward_refs()
 class DashboardResponse(BaseModel):
     layout: LayoutType
     vegaSpecs: Dict[str, str]
+
+class UpdateChartRequest(BaseModel):
+    specId: str
+    selection: Any
+
+class UpdateChartResponse(BaseModel):
+    vegaSpec: str

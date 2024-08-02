@@ -1,3 +1,6 @@
+[tool.mypy]
+files = ["src/"]
+
 [tool.poetry]
 name = "test-python-project"
 version = "0.1.0"
@@ -10,6 +13,9 @@ python = "^3.10"
 fastapi = "^0.111.1"
 altair = {extras = ["all"], version = "^5.3.0"}
 
+
+[tool.poetry.group.dev.dependencies]
+pandas-stubs = "^2.2.2.240603"
 
 [build-system]
 requires = ["poetry-core"]
