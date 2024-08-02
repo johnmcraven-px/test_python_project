@@ -7,8 +7,8 @@ class RowLayoutType(BaseModel):
     className: Optional[str]
     content: List['LayoutType']
 
-class ColLayoutType(BaseModel):
-    type: Literal["col"]
+class ListLayoutType(BaseModel):
+    type: Literal["list"]
     className: Optional[str]
     content: List['LayoutType']
 
@@ -18,10 +18,10 @@ class ComponentLayoutType(BaseModel):
     componentName: str
     componentState: Any
 
-LayoutType = Union[RowLayoutType, ColLayoutType, ComponentLayoutType]
+LayoutType = Union[RowLayoutType, ListLayoutType, ComponentLayoutType]
 
 RowLayoutType.update_forward_refs()
-ColLayoutType.update_forward_refs()
+ListLayoutType.update_forward_refs()
 
 
 class DashboardResponse(BaseModel):

@@ -4,7 +4,7 @@ import altair as alt
 import pandas as pd
 from vega_datasets import data
 import json
-from dashboardTypes import DashboardResponse, RowLayoutType, ColLayoutType, ComponentLayoutType, LayoutType
+from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, ComponentLayoutType, LayoutType
 
 source = data.cars()
 
@@ -99,8 +99,8 @@ def getLayout() -> LayoutType:
             ),
         ]
     )
-    return ColLayoutType(
-        type="col",
+    return ListLayoutType(
+        type="list",
         className=None,
         content=[
             row1,
