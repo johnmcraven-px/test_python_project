@@ -24,12 +24,6 @@ def getLayout() -> LayoutType:
         className=None,
         content=[
             ComponentLayoutType(
-                className=None,
-                type="component",
-                componentName="VegaLiteChart",
-                componentState={"specId": "performance_summary"}
-            ),
-            ComponentLayoutType(
                 type="component",
                 className=None,
                 componentName="VegaLiteChart",
@@ -128,6 +122,7 @@ def initialize():
 
     # Read csv from ../data/optimization_results.csv into a pandas dataframe
     df = pd.read_csv("../data/optimization_results.csv")
+    # df = pd.read_csv("../data/viz_gen/optimization_results_2.csv")
 
 
     # Convert Batch to string for categorical encoding
@@ -145,13 +140,12 @@ def initialize():
     ).reset_index()
 
     performance_chart = alt.Chart(performance_summary).transform_fold(
-        ['min_performance', 'max_performance', 'avg_performance'],
-        as_=['Metric', 'Value']
+        ['min_performance', 'max_performance', 'avg_performance']
     ).mark_line(point=True).encode(
         x='Batch:N',
-        y='Value:Q',
-        color='Metric:N',
-        tooltip=['Batch:N', 'Metric:N', 'Value:Q']
+        y='value:Q',
+        color='key:N',
+        tooltip=['Batch:N', 'key:N', 'value:Q']
     ).properties(
         title='Batch-wise Performance Summary'
     )
@@ -206,14 +200,13 @@ def initialize():
         window=[{'op': 'rank', 'as': 'rank'}],
         sort=[{'field': 'Batch'}, {'field': 'Run'}]
     ).transform_fold(
-        ['Performance', 'Time', 'ConstraintSatisfaction', 'ParetoScore'],
-        as_=['Metric', 'Value']
+        ['Performance', 'Time', 'ConstraintSatisfaction', 'ParetoScore']
     ).mark_line().encode(
-        x='Metric:N',
-        y='Value:Q',
+        x='key:N',
+        y='value:Q',
         color='Batch:N',
         detail='rank:N',
-        tooltip=['Batch', 'Run', 'Metric', 'Value']
+        tooltip=['Batch', 'Run', 'key:N', 'value:Q']
     ).properties(
         title='Parallel Coordinates Plot for Performance Metrics'
     )
@@ -243,13 +236,12 @@ def initialize():
     # 9. Scatter Matrix to Explore Relationships (Scatter Matrix)
     scatter_matrix = alt.Chart(df).transform_fold(
         ['Performance', 'Time', 'ConstraintSatisfaction', 'ParetoScore'],
-        as_=['Metric', 'Value']
     ).mark_point().encode(
-        x=alt.X('Value:Q', scale=alt.Scale(zero=False)),
-        y=alt.Y('Value:Q', scale=alt.Scale(zero=False)),
+        x=alt.X('value:Q', scale=alt.Scale(zero=False)),
+        y=alt.Y('value:Q', scale=alt.Scale(zero=False)),
         color='Batch:N',
-        facet=alt.Facet('Metric:N', columns=2),
-        tooltip=['Batch', 'Run', 'Metric', 'Value']
+        facet=alt.Facet('key:N', columns=2),
+        tooltip=['Batch', 'Run', 'key:N', 'value:Q']
     ).properties(
         title='Scatter Matrix for Relationship Exploration'
     )
@@ -270,7 +262,6 @@ def initialize():
         color='gray'
     )
 
-    addChartSpec("performance_summary", performance_summary)
     addChartSpec("performance_chart", performance_chart)
     addChartSpec("failure_chart", failure_chart)
     addChartSpec("pareto_chart", pareto_chart)
@@ -282,7 +273,3 @@ def initialize():
     addChartSpec("scatter_matrix", scatter_matrix)
 
     return DashboardResponse(layout=getLayout(), vegaSpecs=vegaSpecs)
-
-
-
-
