@@ -17,7 +17,6 @@ alt.Chart(source).mark_circle(size=60).encode(
 
 app = FastAPI()
 
-
 def getLayout() -> LayoutType:
     row1 = RowLayoutType(
         type="row",
@@ -27,12 +26,14 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className="flex-1",
+                style=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "performance_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
                 className="flex-1",
+                style=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "failure_chart", "autoScale": True}
             )
@@ -45,6 +46,7 @@ def getLayout() -> LayoutType:
         content=[
             ComponentLayoutType(
                 className="flex-1",
+                style=None,
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "pareto_chart", "autoScale": True}
@@ -52,11 +54,13 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className="flex-1",
+                style=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "comparison_chart_with_line", "autoScale": True}
             ),
             ComponentLayoutType(
                 className="flex-1",
+                style=None,
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "parallel_coordinates", "autoScale": True}
@@ -72,6 +76,7 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className="flex-1",
+                style=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "heatmap"}
             )
@@ -86,11 +91,13 @@ def getLayout() -> LayoutType:
             ComponentLayoutType(
                 type="component",
                 className="flex-1",
+                style=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "pareto_line_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 className="flex-1",
+                style=None,
                 type="component",
                 componentName="VegaLiteChart",
                 componentState={"specId": "scatter_matrix", "autoScale": True}
@@ -100,6 +107,7 @@ def getLayout() -> LayoutType:
     return ListLayoutType(
         type="list",
         className=None,
+        style=None,
         content=[
             row1,
             row2,
