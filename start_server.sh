@@ -9,4 +9,4 @@ if [ $# -eq 1 ]; then
 fi
 
 # Start the FastAPI server
-uvicorn main:app --host 0.0.0.0 --port $PORT
+PYTHONPATH=src uvicorn src.main:app --host 0.0.0.0 --port $PORT
