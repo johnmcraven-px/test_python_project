@@ -59,8 +59,8 @@ def generate_filtered_chart(df: pd.DataFrame, selection):
     selected_batch = None
     selected_run = None
     if selection is not None:
-        selected_batch = selection['fields']['Batch']
-        selected_run = selection['fields']['Run']
+        selected_batch = selection['Batch']
+        selected_run = selection['Run']
 
         filtered_df = df[(df['Batch'] == selected_batch) & (df['Run'] == selected_run)]
     if selected_batch is None or selected_run is None:
