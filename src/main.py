@@ -57,13 +57,14 @@ def generate_initial_chart(df: pd.DataFrame, initial_selection):
 def generate_filtered_chart(df: pd.DataFrame, selection):
     filtered_df = df
     selected_batch = None
+    selected_run = None
     if selection is not None:
         selected_batch = selection['fields']['Batch']
         selected_run = selection['fields']['Run']
 
         filtered_df = df[(df['Batch'] == selected_batch) & (df['Run'] == selected_run)]
-    if selected_batch is None:
-        title = f'Metrics for All Batches, Run {selected_run}'
+    if selected_batch is None or selected_run is None:
+        title = f'Metrics for All Batches and Runs'
     else:
         title = f'Metrics for Batch {selected_batch}, Run {selected_run}'
     filtered_chart = alt.Chart(filtered_df).mark_bar().encode(
