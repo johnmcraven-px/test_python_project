@@ -61,8 +61,9 @@ def generate_filtered_chart(df: pd.DataFrame, selection):
     if selection is not None:
         selected_batch = selection['Batch']
         selected_run = selection['Run']
-
         filtered_df = df[(df['Batch'] == selected_batch) & (df['Run'] == selected_run)]
+    
+    print("xyzSel", selection, selected_batch, selected_run)
     if selected_batch is None or selected_run is None:
         title = f'Metrics for All Batches and Runs'
     else:
@@ -119,13 +120,17 @@ def update_chart(request: UpdatesFromSignalsRequest) -> UpdatesFromSignalsRespon
         initial_selection = {"Batch": value["Batch"], "Run": value["Run"]}
     else:
         initial_selection = None
+    previousVegaSpecs = lastVegaSpecs
     newVegaSpecs = generateCharts(initial_selection).vegaSpecs
     updatedVegaSpecs: Dict[str, str] = {}
-    if lastVegaSpecs is None:
+    if previousVegaSpecs is None:
+        print("xyzPr1")
         updatedVegaSpecs = newVegaSpecs
     else:    
         for key, value in newVegaSpecs.items():
-            if value != lastVegaSpecs[key]:
+            print("xyzPr2", key)
+            if value != previousVegaSpecs[key]:
+                print("xyzPr3", key)
                 updatedVegaSpecs[key] = value
     return UpdatesFromSignalsResponse(vegaSpecs=updatedVegaSpecs)
 
