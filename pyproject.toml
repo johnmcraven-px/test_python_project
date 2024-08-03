@@ -1,5 +1,7 @@
 [tool.mypy]
 files = ["src/"]
+mypy_path = "src/"
+ignore_missing_imports = true
 
 [tool.poetry]
 name = "test-python-project"
@@ -7,6 +9,7 @@ version = "0.1.0"
 description = ""
 authors = ["John McRaven <john.mcraven@physicsx.ai>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"

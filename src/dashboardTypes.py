@@ -31,9 +31,10 @@ class DashboardResponse(BaseModel):
     layout: LayoutType
     vegaSpecs: Dict[str, str]
 
-class UpdateChartRequest(BaseModel):
-    specId: str
-    selection: Any
+class UpdatesFromSignalsRequest(BaseModel):
+    # {[sourceSpecId: string]: {[signalName: any]}}
+    signals: Dict[str, Dict[str, Any]]
 
-class UpdateChartResponse(BaseModel):
-    vegaSpec: str
+
+class UpdatesFromSignalsResponse(BaseModel):
+    vegaSpecs: Dict[str, str]

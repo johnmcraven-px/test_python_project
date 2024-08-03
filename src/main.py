@@ -4,7 +4,7 @@ import altair as alt
 import pandas as pd
 from vega_datasets import data
 import json
-from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, ComponentLayoutType, LayoutType, UpdateChartRequest, UpdateChartResponse
+from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, ComponentLayoutType, LayoutType, UpdatesFromSignalsRequest, UpdatesFromSignalsResponse
 
 def getLayout() -> LayoutType:
     return ListLayoutType(
@@ -37,6 +37,7 @@ app = FastAPI()
 
 default_selection = alt.selection_single(fields=['Batch', 'Run'], nearest=True, on='click', empty='none')
 
+lastVegaSpecs: Dict[str, str] | None = None
 
 def generate_initial_chart(df: pd.DataFrame):
     scatter_plot = alt.Chart(df).mark_circle(size=100).encode(
@@ -89,6 +90,8 @@ def generateCharts(selection) -> DashboardResponse:
     addChartSpec("primary_chart", primary_chart)
     addChartSpec("filtered_chart", filtered_chart)
 
+    global lastVegaSpecs
+    lastVegaSpecs = vegaSpecs
     return DashboardResponse(layout=getLayout(), vegaSpecs=vegaSpecs)
 
 
@@ -96,8 +99,16 @@ def generateCharts(selection) -> DashboardResponse:
 def initialize():
     return generateCharts(default_selection)
 
-@app.post("/updated_chart/{spec_id}")
-def update_chart(request: UpdateChartRequest) -> UpdateChartResponse:
-    selection = request.selection
-    return UpdateChartResponse(vegaSpec=generateCharts(selection).vegaSpecs[request.specId])
+@app.post("/updates_from_signals")
+def update_chart(request: UpdatesFromSignalsRequest) -> UpdatesFromSignalsResponse:
+    print("xyzUC", request)
+    newVegaSpecs = generateCharts(default_selection).vegaSpecs
+    updatedVegaSpecs: Dict[str, str] = {}
+    if lastVegaSpecs is None:
+        updatedVegaSpecs = newVegaSpecs
+    else:    
+        for key, value in newVegaSpecs.items():
+            if value != lastVegaSpecs[key]:
+                updatedVegaSpecs[key] = value
+    return UpdatesFromSignalsResponse(vegaSpecs=updatedVegaSpecs)
 
