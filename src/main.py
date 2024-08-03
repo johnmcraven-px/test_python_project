@@ -42,8 +42,8 @@ def generate_initial_chart(df: pd.DataFrame, initial_selection):
     else:
         value = [initial_selection]
     selection = alt.selection_single(fields=['Batch', 'Run'], nearest=True, on='click', empty='none', value=value)
-    opacity = alt.condition(selection, alt.value(1), alt.value(0.3)) if selection is not None else None
-    size = alt.condition(selection, alt.value(200), alt.value(100)) if selection is not None else None
+    opacity = alt.condition(selection, alt.value(1), alt.value(0.3)) if selection is not None else alt.value(1)
+    size = alt.condition(selection, alt.value(200), alt.value(100)) if selection is not None else alt.value(100)
     scatter_plot = alt.Chart(df).mark_circle(size=100).encode(
         x='Performance:Q',
         y='ConstraintSatisfaction:Q',
