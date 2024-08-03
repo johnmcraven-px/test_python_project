@@ -114,7 +114,7 @@ def initialize():
 def update_chart(request: UpdatesFromSignalsRequest) -> UpdatesFromSignalsResponse:
     print("xyzUC", request)
     primary_chart_signals = request.signals["primary_chart"]
-    value = primary_chart_signals["clicked_point"] if primary_chart_signals and primary_chart_signals["clicked_point"] else None
+    value = primary_chart_signals["clicked_point"]["datum"] if primary_chart_signals and primary_chart_signals["clicked_point"] and primary_chart_signals["clicked_point"]["datum"] else None
     if value is not None:
         initial_selection = {"Batch": value["Batch"], "Run": value["Run"]}
     else:
