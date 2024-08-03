@@ -34,27 +34,29 @@ def getLayout() -> LayoutType:
 
 app = FastAPI()
 
-
-default_selection = alt.selection_single(fields=['Batch', 'Run'], nearest=True, on='click', empty='none')
-
 lastVegaSpecs: Dict[str, str] | None = None
 
-def generate_initial_chart(df: pd.DataFrame):
+def generate_initial_chart(df: pd.DataFrame, initial_selection):
+    selection = alt.selection_single(fields=['Batch', 'Run'], nearest=True, on='click', empty='none', init=initial_selection)
     scatter_plot = alt.Chart(df).mark_circle(size=100).encode(
         x='Performance:Q',
         y='ConstraintSatisfaction:Q',
         color='Batch:N',
         tooltip=['Batch', 'Run', 'Performance', 'ConstraintSatisfaction', 'Time', 'ParetoScore']
+    ).add_selection(
+        selection
     ).properties(
         title='Interactive Scatter Plot: Click on a Point'
     )
     return scatter_plot
 
 def generate_filtered_chart(df: pd.DataFrame, selection):
-    selected_batch = selection['fields']['Batch']
-    selected_run = selection['fields']['Run']
+    filtered_df = df
+    if selection is not None:
+        selected_batch = selection['fields']['Batch']
+        selected_run = selection['fields']['Run']
 
-    filtered_df = df[(df['Batch'] == selected_batch) & (df['Run'] == selected_run)]
+        filtered_df = df[(df['Batch'] == selected_batch) & (df['Run'] == selected_run)]
 
     filtered_chart = alt.Chart(filtered_df).mark_bar().encode(
         x=alt.X('variable:N', title='Metrics'),
@@ -68,7 +70,7 @@ def generate_filtered_chart(df: pd.DataFrame, selection):
     )
     return filtered_chart
 
-def generateCharts(selection) -> DashboardResponse:
+def generateCharts(initial_selection) -> DashboardResponse:
     vegaSpecs: Dict[str, str] = {}
 
     def addChartSpec(key: str, chart: alt.Chart): 
@@ -84,8 +86,8 @@ def generateCharts(selection) -> DashboardResponse:
     # Convert Batch to string for categorical encoding
     df['Batch'] = df['Batch'].astype(str)
 
-    primary_chart = generate_initial_chart(df)
-    filtered_chart = generate_filtered_chart(df, selection)
+    primary_chart = generate_initial_chart(df, initial_selection)
+    filtered_chart = generate_filtered_chart(df, initial_selection)
     
     addChartSpec("primary_chart", primary_chart)
     addChartSpec("filtered_chart", filtered_chart)
@@ -97,12 +99,18 @@ def generateCharts(selection) -> DashboardResponse:
 
 @app.get("/initialize")
 def initialize():
-    return generateCharts(default_selection)
+    return generateCharts(None)
 
 @app.post("/updates_from_signals")
 def update_chart(request: UpdatesFromSignalsRequest) -> UpdatesFromSignalsResponse:
     print("xyzUC", request)
-    newVegaSpecs = generateCharts(default_selection).vegaSpecs
+    primary_chart_signals = request.signals["primary_chart"]
+    value = primary_chart_signals["clicked_point"] if primary_chart_signals and primary_chart_signals["clicked_point"] else None
+    if value is not None:
+        initial_selection = {"Batch": value["Batch"], "Run": value["Run"]}
+    else:
+        initial_selection = None
+    newVegaSpecs = generateCharts(initial_selection).vegaSpecs
     updatedVegaSpecs: Dict[str, str] = {}
     if lastVegaSpecs is None:
         updatedVegaSpecs = newVegaSpecs
