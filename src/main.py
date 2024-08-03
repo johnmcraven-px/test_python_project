@@ -37,7 +37,11 @@ app = FastAPI()
 lastVegaSpecs: Dict[str, str] | None = None
 
 def generate_initial_chart(df: pd.DataFrame, initial_selection):
-    selection = alt.selection_single(fields=['Batch', 'Run'], nearest=True, on='click', empty='none', value=[initial_selection])
+    if initial_selection is None:
+        value = None
+    else:
+        value = [initial_selection]
+    selection = alt.selection_single(fields=['Batch', 'Run'], nearest=True, on='click', empty='none', value=value)
     scatter_plot = alt.Chart(df).mark_circle(size=100).encode(
         x='Performance:Q',
         y='ConstraintSatisfaction:Q',
