@@ -9,19 +9,19 @@ from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, Com
 def getLayout() -> LayoutType:
     row = RowLayoutType(
         type="row",
-        className=None,
+        className="items-stretch",
         style={"minHeight": 400},
         content=[
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 style=None,
                 componentName="VegaLiteChart",
                 componentState={"specId": "filtered_chart", "autoScale": True}
             ),
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 style=None,
                 componentName="StlFileView",
                 componentState={"filePath": "/stl/demo.stl"}
