@@ -7,6 +7,27 @@ import json
 from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, ComponentLayoutType, LayoutType, UpdatesFromSignalsRequest, UpdatesFromSignalsResponse
 
 def getLayout() -> LayoutType:
+    row = RowLayoutType(
+        type="row",
+        className=None,
+        style={"minHeight": 400},
+        content=[
+            ComponentLayoutType(
+                type="component",
+                className=None,
+                style=None,
+                componentName="VegaLiteChart",
+                componentState={"specId": "filtered_chart", "autoScale": True}
+            ),
+            ComponentLayoutType(
+                type="component",
+                className=None,
+                style=None,
+                componentName="StlFileView",
+                componentState={"filePath": "/stl/demo.stl"}
+            )
+        ]
+    )
     return ListLayoutType(
         type="list",
         className=None,
@@ -19,13 +40,7 @@ def getLayout() -> LayoutType:
                 componentName="VegaLiteChart",
                 componentState={"specId": "primary_chart", "autoScale": True, "eventTypes": ["clicked_point"]}
             ),
-            ComponentLayoutType(
-                type="component",
-                className=None,
-                style={"minHeight": 400},
-                componentName="VegaLiteChart",
-                componentState={"specId": "filtered_chart", "autoScale": True}
-            )
+            row
 
         ]
     )
