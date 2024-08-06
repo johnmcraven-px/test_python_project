@@ -61,20 +61,35 @@ def create_openfoam_case(case_dir, stl_file):
         object      controlDict;
     }
     application     simpleFoam;
+
     startFrom       startTime;
+
     startTime       0;
+
     stopAt          endTime;
-    endTime         1000;
-    deltaT          1;
+
+    endTime         100; // Adjust this as needed
+
+    deltaT          1; // Increase this to speed up the simulation, but ensure stability
+
     writeControl    timeStep;
-    writeInterval   100;
+
+    writeInterval   10; // Adjust this to write results less frequently
+
     purgeWrite      0;
+
     writeFormat     ascii;
-    writePrecision   6;
+
+    writePrecision  6;
+
     writeCompression off;
+
     timeFormat      general;
+
     timePrecision   6;
-    runTimeModifiable yes;
+
+    runTimeModifiable true;
+
     functions
     {
     }
@@ -111,9 +126,9 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(phi,U)      Gauss upwind;
-    div(phi,k)      Gauss upwind;
-    div(phi,epsilon) Gauss upwind;
+    div(phi,U)      Gauss linearUpwind grad(U);
+    div(phi,k)      Gauss linearUpwind grad(k);
+    div(phi,epsilon) Gauss linearUpwind grad(epsilon);
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
 }
 
@@ -139,6 +154,9 @@ fluxRequired
     phi;
     rho;
 }
+
+CourantNo       10; // Increase as needed, but ensure stability
+
 
 // ************************************************************************* //
 """
@@ -239,57 +257,59 @@ FoamFile
     object      blockMeshDict;
 }
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 convertToMeters 1;
 
 vertices
 (
-    (1 0 0)           // 0
-    (0.707 0.707 0)   // 1
-    (0 1 0)           // 2
-    (-0.707 0.707 0)  // 3
-    (-1 0 0)          // 4
-    (-0.707 -0.707 0) // 5
-    (0 -1 0)          // 6
-    (0.707 -0.707 0)  // 7
-    (1 0 1)           // 8
-    (0.707 0.707 1)   // 9
-    (0 1 1)           // 10
-    (-0.707 0.707 1)  // 11
-    (-1 0 1)          // 12
-    (-0.707 -0.707 1) // 13
-    (0 -1 1)          // 14
-    (0.707 -0.707 1)  // 15
-    (0 0 0)           // 16 center bottom
-    (0 0 1)           // 17 center top
+    (5 0 -2.5)           // 0
+    (3.535 3.535 -2.5)   // 1
+    (0 5 -2.5)           // 2
+    (-3.535 3.535 -2.5)  // 3
+    (-5 0 -2.5)          // 4
+    (-3.535 -3.535 -2.5) // 5
+    (0 -5 -2.5)          // 6
+    (3.535 -3.535 -2.5)  // 7
+    (5 0 2.5)            // 8
+    (3.535 3.535 2.5)    // 9
+    (0 5 2.5)            // 10
+    (-3.535 3.535 2.5)   // 11
+    (-5 0 2.5)           // 12
+    (-3.535 -3.535 2.5)  // 13
+    (0 -5 2.5)           // 14
+    (3.535 -3.535 2.5)   // 15
+    (0 0 -2.5)           // 16 center bottom
+    (0 0 2.5)            // 17 center top
 );
 
 blocks
 (
-    hex (16 0 1 2 17 8 9 10) (20 20 1) simpleGrading (1 1 1)
-    hex (16 2 3 4 17 10 11 12) (20 20 1) simpleGrading (1 1 1)
-    hex (16 4 5 6 17 12 13 14) (20 20 1) simpleGrading (1 1 1)
-    hex (16 6 7 0 17 14 15 8) (20 20 1) simpleGrading (1 1 1)
+    hex (16 0 1 2 17 8 9 10) (100 100 1) simpleGrading (1 1 1)
+    hex (16 2 3 4 17 10 11 12) (100 100 1) simpleGrading (1 1 1)
+    hex (16 4 5 6 17 12 13 14) (100 100 1) simpleGrading (1 1 1)
+    hex (16 6 7 0 17 14 15 8) (100 100 1) simpleGrading (1 1 1)
 );
 
 edges
 (
-    arc 0 1 (0.853 0.353 0)
-    arc 1 2 (0.353 0.853 0)
-    arc 2 3 (-0.353 0.853 0)
-    arc 3 4 (-0.853 0.353 0)
-    arc 4 5 (-0.853 -0.353 0)
-    arc 5 6 (-0.353 -0.853 0)
-    arc 6 7 (0.353 -0.853 0)
-    arc 7 0 (0.853 -0.353 0)
+    arc 0 1 (4.265 1.765 -2.5)
+    arc 1 2 (1.765 4.265 -2.5)
+    arc 2 3 (-1.765 4.265 -2.5)
+    arc 3 4 (-4.265 1.765 -2.5)
+    arc 4 5 (-4.265 -1.765 -2.5)
+    arc 5 6 (-1.765 -4.265 -2.5)
+    arc 6 7 (1.765 -4.265 -2.5)
+    arc 7 0 (4.265 -1.765 -2.5)
     
-    arc 8 9 (0.853 0.353 1)
-    arc 9 10 (0.353 0.853 1)
-    arc 10 11 (-0.353 0.853 1)
-    arc 11 12 (-0.853 0.353 1)
-    arc 12 13 (-0.853 -0.353 1)
-    arc 13 14 (-0.353 -0.853 1)
-    arc 14 15 (0.353 -0.853 1)
-    arc 15 8 (0.853 -0.353 1)
+    arc 8 9 (4.265 1.765 2.5)
+    arc 9 10 (1.765 4.265 2.5)
+    arc 10 11 (-1.765 4.265 2.5)
+    arc 11 12 (-4.265 1.765 2.5)
+    arc 12 13 (-4.265 -1.765 2.5)
+    arc 13 14 (-1.765 -4.265 2.5)
+    arc 14 15 (1.765 -4.265 2.5)
+    arc 15 8 (4.265 -1.765 2.5)
 );
 
 boundary
@@ -367,7 +387,7 @@ patches
         constructFrom patches;
         patches
         (
-            walls
+            bottom
         );
         faces
         (
@@ -383,7 +403,7 @@ patches
         constructFrom patches;
         patches
         (
-            walls
+            top
         );
         faces
         (
@@ -439,12 +459,12 @@ FoamFile
 castellatedMesh true;
 snap            true;
 addLayers       false;
-
 geometry
 {   
-    propeller.stl  // name of the geometrical entity
+    propeller.stl
     {
         type            triSurfaceMesh;
+        name            propeller;
     }
 }
 
@@ -458,7 +478,7 @@ castellatedMeshControls
     features
     (
         {
-            file "./propeller.eMesh";
+            file "propeller.eMesh";
             level 1;
         }
     );
@@ -468,15 +488,29 @@ castellatedMeshControls
         propeller
         {
             level (2 2);
+            regions
+            {
+                propellerPatch
+                {
+                    name propeller;
+                    type wall;
+                }
+            }
         }
     }
 
     resolveFeatureAngle 30;
+
     refinementRegions
     {
+        propellerZone
+        {
+            mode inside;
+            levels ((1e15 2));
+        }
     }
 
-    locationInMesh (0 0 0);
+    locationInMesh (0 0 0);  // Ensure this point is inside your mesh
     allowFreeStandingZoneFaces true;
 }
 
@@ -491,9 +525,7 @@ snapControls
 addLayersControls
 {
     relativeSizes true;
-    layers
-    {
-    }
+    layers { }
 
     expansionRatio 1.0;
     finalLayerThickness 0.3;
@@ -532,6 +564,15 @@ meshQualityControls
 
 mergeTolerance 1E-6;
 
+zones
+{
+    propellerZone
+    {
+        type cellZone;
+        name propellerZone;
+    }
+}
+
 // ************************************************************************* //
 """
     write_file("snappyHexMeshDict", snappy_hex_mesh_dict_content)
@@ -545,22 +586,19 @@ mergeTolerance 1E-6;
         version     2.0;
         format      ascii;
         class       dictionary;
-        location    "constant";
         object      MRFProperties;
     }
 
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    
     MRFZones
     (
-        propeller
+        propellerZone
         {
-            cellZone        myZone;
-            active          yes;
+            cellZone    propellerZone; // Name of the cell zone from snappyHexMeshDict
+            active      yes;
             nonRotatingPatches ();
-            origin          (0 0 0);    // Define the origin of the rotation
-            axis            (0 0 1);    // Define the axis of rotation
-            omega           10;         // Define the angular velocity (rad/s)
+            origin      (0 0 0); // Center of rotation, adjust as necessary
+            axis        (0 0 1); // Axis of rotation
+            omega       30; // Rotational speed in rad/s
         }
     );
 
@@ -836,6 +874,11 @@ boundaryField
     {
         type            slip;
     }
+    propeller
+    {
+        type            movingWallVelocity;
+        value           uniform (0 0 0);
+    }
 }
 
 // ************************************************************************* //
@@ -879,6 +922,10 @@ boundaryField
         type            zeroGradient;
     }
     top
+    {
+        type            zeroGradient;
+    }
+    propeller
     {
         type            zeroGradient;
     }
@@ -932,6 +979,11 @@ boundaryField
         type            calculated;
         value           uniform 1e-5;
     }
+    propeller
+    {
+        type            nutkWallFunction;
+        value           uniform 1e-5;
+    }
 }
 
 // ************************************************************************* //
@@ -979,6 +1031,11 @@ boundaryField
     top
     {
         type            zeroGradient;
+    }
+    propeller
+    {
+        type            kqRWallFunction;
+        value           uniform 0.005;
     }
 }
 
@@ -1028,6 +1085,11 @@ boundaryField
     {
         type            zeroGradient;
     }
+    propeller
+    {
+        type            epsilonWallFunction;
+        value           uniform 0.1;
+    }
 }
 
 // ************************************************************************* //
@@ -1046,9 +1108,41 @@ def extract_forces_data(case_dir):
     forces_data = pd.read_csv(forces_file, delim_whitespace=True, skiprows=4)
     return forces_data
 
+def decompose_mesh():
+    """Decompose the mesh for parallel processing."""
+    return_code, stdout, stderr = run_command('decomposePar')
+    if return_code != 0:
+        print("Error during decomposePar")
+        print(stderr.decode('utf-8'))
+    else:
+        print("decomposePar completed successfully")
+        print(stdout.decode('utf-8'))
+
+def run_parallel_simulation(num_processors):
+    """Run the OpenFOAM simulation in parallel."""
+    command = f'mpirun -np {num_processors} simpleFoam -parallel'
+    return_code, stdout, stderr = run_command(command)
+    if return_code != 0:
+        print("Error during parallel simulation")
+        print(stderr.decode('utf-8'))
+    else:
+        print("Parallel simulation completed successfully")
+        print(stdout.decode('utf-8'))
+
+def reconstruct_results():
+    """Reconstruct the results from the parallel simulation."""
+    return_code, stdout, stderr = run_command('reconstructPar')
+    if return_code != 0:
+        print("Error during reconstructPar")
+        print(stderr.decode('utf-8'))
+    else:
+        print("reconstructPar completed successfully")
+        print(stdout.decode('utf-8'))
+
 def main():
     # Set the case directory inside Docker
     case_dir = "/home/openfoam/case"  # Directory inside Docker container
+    run_command(f"cd {case_dir} && rm -r ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
 
@@ -1063,6 +1157,7 @@ def main():
     run_command(f"cd {case_dir} && blockMesh")
     run_command(f"cd {case_dir} && createPatch -overwrite")
     run_command(f"cd {case_dir} && surfaceFeatures")
+    
 
     # Check if .eMesh file was created
     run_command(f"ls {case_dir}/constant/triSurface")
@@ -1075,10 +1170,18 @@ def main():
 
 
     # Print log output
-    log_output = run_command(f"cd {case_dir} && tail -n 50 log.simpleFoam", check_output=False)
-    print(f"Log Output:\n{log_output.stdout}")
+    # log_output = run_command(f"cd {case_dir} && tail -n 50 log.simpleFoam", check_output=False)
+    # print(f"Log Output:\n{log_output.stdout}")
+    # Decompose the mesh for parallel processing
+    # run in parallel mode
+    decompose_mesh()
 
-    run_command(f"cd {case_dir} && foamToVTK")
+    # Run the simulation in parallel
+    num_processors = 2  # Adjust this based on your available hardware
+    run_parallel_simulation(num_processors)
+
+    # Reconstruct the results from the parallel simulation
+    reconstruct_results()
 
     # # Extract forces data
     # forces_data = extract_forces_data(case_dir)
