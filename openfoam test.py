@@ -470,16 +470,17 @@ geometry
 
 castellatedMeshControls
 {
-    maxLocalCells 1000000;
-    maxGlobalCells 2000000;
-    minRefinementCells 10;
-    nCellsBetweenLevels 3;
+    maxLocalCells 2000000;  // Increase the number of cells for better resolution
+    maxGlobalCells 4000000; // Increase the global number of cells
+
+    minRefinementCells 0;   // Allow zero refined cells in small cell zones
+    nCellsBetweenLevels 2;  // Reduce the number of cells between levels for finer transitions
 
     features
     (
         {
             file "propeller.eMesh";
-            level 1;
+            level 3;  // Increase the feature edge refinement level
         }
     );
 
@@ -487,7 +488,7 @@ castellatedMeshControls
     {
         propeller
         {
-            level (2 2);
+            level (4 4);  // Increase the surface refinement level
             regions
             {
                 propellerPatch
@@ -499,7 +500,7 @@ castellatedMeshControls
         }
     }
 
-    resolveFeatureAngle 30;
+    resolveFeatureAngle 3;  // Angle to resolve sharp edges
 
     refinementRegions
     {
@@ -516,10 +517,11 @@ castellatedMeshControls
 
 snapControls
 {
-    nSmoothPatch 3;
-    tolerance 2.0;
-    nSolveIter 30;
-    nRelaxIter 5;
+    nSmoothPatch 5;   // Increase the number of smoothing iterations for better surface fit
+    tolerance 1.0;    // Increase the tolerance for snapping
+    nSolveIter 30;    // Increase the number of solving iterations
+    nRelaxIter 10;    // Increase the number of relaxing iterations
+    nFeatureSnapIter 10;  // Number of feature snapping iterations
 }
 
 addLayersControls
