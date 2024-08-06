@@ -1,6 +1,13 @@
 import bpy
 import math
 from mathutils import Matrix
+import os
+import sys
+
+output_dir = "../data/output"
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 def delete_default_cube():
     bpy.ops.object.select_all(action='DESELECT')
@@ -165,7 +172,7 @@ def create_lightbox():
     right_plane.name = "RightPlane"
     right_plane.data.materials.append(bottom_mat)
 
-def render_multiple_views(propeller, filepath_base):
+def render_multiple_views(propeller, filename_base):
     angles = [(0, -10, 10), (10, -10, 10), (-10, -10, 10), (0, -20, 10)]
     for i, location in enumerate(angles):
         bpy.ops.object.camera_add(location=location)
@@ -181,18 +188,27 @@ def render_multiple_views(propeller, filepath_base):
         
         # Render the image
         bpy.context.scene.render.image_settings.file_format = 'PNG'
-        bpy.context.scene.render.filepath = f"{filepath_base}_view{i+1}.png"
+        bpy.context.scene.render.filepath = os.path.join(output_dir, f"{filename_base}_view{i+1}.png")
         bpy.ops.render.render(write_still=True)
 
+args = sys.argv
+args = args[args.index("--") + 1:]  # Only take arguments after "--"
+
+if len(args) != 8:
+    print("args", len(sys.argv), sys.argv, len(args), args)
+    print("Usage: python blender_generate.py blade_height blade_length blade_thickness blade_width hub_height hub_radius num_blades twist_angle")
+    sys.exit(1)
+
+
 # Parameters for the propeller
-num_blades = 4
-blade_length = 3.0
-blade_width = 0.3
-blade_height = 0.1
-twist_angle = 30.0
-hub_radius = 0.2
-hub_height = 0.4
-blade_thickness = 0.02
+blade_height = float(args[0])
+blade_length = float(args[1])
+blade_thickness = float(args[2])
+blade_width = float(args[3])
+hub_height = float(args[4])
+hub_radius = float(args[5])
+num_blades = int(args[6])
+twist_angle = float(args[7])
 
 # Define the rotation speed in RPM
 rotation_speed = 150
@@ -215,8 +231,8 @@ for blade in blades:
 bpy.ops.object.join()
 
 # Export the propeller to STL
-filepath_base = "./output/propeller"
-bpy.ops.export_mesh.stl(filepath=f"{filepath_base}.stl", use_selection=True)
+filename_base = "propeller"
+bpy.ops.export_mesh.stl(filepath=os.path.join(output_dir, f"{filename_base}.stl"), use_selection=True)
 
 # Set world background to pure white
 bpy.context.scene.world.use_nodes = True
@@ -228,7 +244,7 @@ world_output = world_nodes.new(type='ShaderNodeOutputWorld')
 bpy.context.scene.world.node_tree.links.new(bg_node.outputs['Background'], world_output.inputs['Surface'])
 
 # Save the Blender file with a fixed name
-bpy.ops.wm.save_as_mainfile(filepath=f"{filepath_base}.blend")
+bpy.ops.wm.save_as_mainfile(filepath=os.path.join(output_dir, f"{filename_base}.blend"))
 
 # Add lighting for a lightbox effect
 bpy.ops.object.light_add(type='AREA', location=(0, -10, 10))
@@ -255,7 +271,7 @@ left_light.data.size = 20
 left_light.rotation_euler = (0, math.radians(-90), 0)
 
 # Render multiple views
-render_multiple_views(propeller, filepath_base)
+render_multiple_views(propeller, filename_base)
 
 # Setup camera for animation
 bpy.ops.object.camera_add(location=(0, -10, 10))
@@ -295,7 +311,7 @@ bpy.context.scene.render.ffmpeg.format = 'MPEG4'
 bpy.context.scene.render.ffmpeg.codec = 'H264'
 bpy.context.scene.render.ffmpeg.constant_rate_factor = 'HIGH'
 bpy.context.scene.render.ffmpeg.ffmpeg_preset = 'GOOD'
-bpy.context.scene.render.filepath = f"{filepath_base}_animation.mp4"
+bpy.context.scene.render.filepath = os.path.join(output_dir, f"{filename_base}_animation.mp4")
 
 # Render the animation
 bpy.ops.render.render(animation=True)
