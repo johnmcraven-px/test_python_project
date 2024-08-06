@@ -1177,7 +1177,7 @@ def main():
     decompose_mesh()
 
     # Run the simulation in parallel
-    num_processors = 2  # Adjust this based on your available hardware
+    num_processors = 8  # Adjust this based on your available hardware
     run_parallel_simulation(num_processors)
 
     # Reconstruct the results from the parallel simulation
