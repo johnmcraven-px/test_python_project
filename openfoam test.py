@@ -326,10 +326,10 @@ vertices
 
 blocks
 (
-    hex (16 0 1 2 17 8 9 10) (100 100 1) simpleGrading (1 1 1)
-    hex (16 2 3 4 17 10 11 12) (100 100 1) simpleGrading (1 1 1)
-    hex (16 4 5 6 17 12 13 14) (100 100 1) simpleGrading (1 1 1)
-    hex (16 6 7 0 17 14 15 8) (100 100 1) simpleGrading (1 1 1)
+    hex (16 0 1 2 17 8 9 10) (20 20 5) simpleGrading (1 1 1)
+    hex (16 2 3 4 17 10 11 12) (20 20 5) simpleGrading (1 1 1)
+    hex (16 4 5 6 17 12 13 14) (20 20 5) simpleGrading (1 1 1)
+    hex (16 6 7 0 17 14 15 8) (20 20 5) simpleGrading (1 1 1)
 );
 
 edges
@@ -475,8 +475,10 @@ FoamFile
 propeller
 {
     surfaces ("propeller.stl");
-    includedAngle 120;
-    
+
+    includedAngle   100;
+    extractionMethod    extractFromSurface;
+
 }
 
 // ************************************************************************* //
@@ -500,12 +502,19 @@ FoamFile
 castellatedMesh true;
 snap            true;
 addLayers       false;
+
 geometry
-{   
+{
     propeller.stl
     {
-        type            triSurfaceMesh;
-        name            propeller;
+        type triSurfaceMesh;
+        name propeller;
+    }
+    background
+    {
+        type searchableBox;
+        min (-5 -5 -2.5);
+        max (5 5 2.5);
     }
 }
 
@@ -515,6 +524,7 @@ castellatedMeshControls
     maxGlobalCells 2000000;
     minRefinementCells 10;
     nCellsBetweenLevels 3;
+    resolveFeatureAngle 30;
 
     features
     (
@@ -529,44 +539,59 @@ castellatedMeshControls
         propeller
         {
             level (2 2);
-            regions
-            {
-                propellerPatch
-                {
-                    name propeller;
-                    type wall;
-                }
-            }
+            faceZone propellerZone;
+            cellZone propellerZone;
+            cellZoneInside inside; // To specify the region inside the cell zone
+        }
+        background
+        {
+            level (1 1);
+            faceZone backgroundZone;
+            cellZone backgroundZone;
+            cellZoneInside inside;
         }
     }
-
-    resolveFeatureAngle 30;
 
     refinementRegions
     {
-        propellerZone
+        propeller
         {
             mode inside;
-            levels ((1e15 2));
+            levels ((1.0 4));
+        }
+        background
+        {
+            mode inside;
+            levels ((1.0 2));
         }
     }
 
-    locationInMesh (0 0 0);  // Ensure this point is inside your mesh
+    locationInMesh (0 0 0.1); // Ensure this is inside the domain
     allowFreeStandingZoneFaces true;
 }
 
 snapControls
 {
     nSmoothPatch 3;
-    tolerance 2.0;
-    nSolveIter 30;
-    nRelaxIter 5;
+    tolerance 2.0; // Increase tolerance for better snapping
+    nSolveIter 10;
+    nRelaxIter 3;
+    nFeatureSnapIter 10;
+    implicitFeatureSnap false;
+    explicitFeatureSnap true;
+    multiRegionFeatureSnap true;
 }
 
 addLayersControls
 {
     relativeSizes true;
-    layers { }
+    layers
+    {
+        propeller
+        {
+            nSurfaceLayers 1;
+        }
+    }
 
     expansionRatio 1.0;
     finalLayerThickness 0.3;
@@ -604,15 +629,6 @@ meshQualityControls
 }
 
 mergeTolerance 1E-6;
-
-zones
-{
-    propellerZone
-    {
-        type cellZone;
-        name propellerZone;
-    }
-}
 
 // ************************************************************************* //
 """
@@ -1202,7 +1218,6 @@ def main():
     
     # Run simpleFoam and capture log output
     run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
-    # run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
 
 
     # Print log output
