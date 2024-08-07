@@ -101,6 +101,47 @@ def create_openfoam_case(case_dir, stl_file):
     copy_file_to_container("controlDict", os.path.join(case_dir, 'system/controlDict'))
     os.remove("controlDict")
 
+    decompose_par_dict_content = """
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+
+numberOfSubdomains 8;
+
+method          scotch;
+
+simpleCoeffs
+{
+    n               (2 2 1);
+    delta           0.001;
+}
+
+hierarchicalCoeffs
+{
+    n               (1 1 1);
+    delta           0.001;
+    order           xyz;
+}
+
+manualCoeffs
+{
+    dataFile        "";
+}
+
+distributed     no;
+
+roots           ( );
+
+// ************************************************************************* //
+"""
+    write_file("decomposeParDict", decompose_par_dict_content)
+    copy_file_to_container("decomposeParDict", os.path.join(case_dir, 'system/decomposeParDict'))
+    os.remove("decomposeParDict")
+
     # Create system/fvSchemes
     fv_schemes_content = """
 FoamFile
@@ -470,17 +511,16 @@ geometry
 
 castellatedMeshControls
 {
-    maxLocalCells 2000000;  // Increase the number of cells for better resolution
-    maxGlobalCells 4000000; // Increase the global number of cells
-
-    minRefinementCells 0;   // Allow zero refined cells in small cell zones
-    nCellsBetweenLevels 2;  // Reduce the number of cells between levels for finer transitions
+    maxLocalCells 1000000;
+    maxGlobalCells 2000000;
+    minRefinementCells 10;
+    nCellsBetweenLevels 3;
 
     features
     (
         {
             file "propeller.eMesh";
-            level 3;  // Increase the feature edge refinement level
+            level 1;
         }
     );
 
@@ -488,7 +528,7 @@ castellatedMeshControls
     {
         propeller
         {
-            level (4 4);  // Increase the surface refinement level
+            level (2 2);
             regions
             {
                 propellerPatch
@@ -500,7 +540,7 @@ castellatedMeshControls
         }
     }
 
-    resolveFeatureAngle 3;  // Angle to resolve sharp edges
+    resolveFeatureAngle 30;
 
     refinementRegions
     {
@@ -517,11 +557,10 @@ castellatedMeshControls
 
 snapControls
 {
-    nSmoothPatch 5;   // Increase the number of smoothing iterations for better surface fit
-    tolerance 1.0;    // Increase the tolerance for snapping
-    nSolveIter 30;    // Increase the number of solving iterations
-    nRelaxIter 10;    // Increase the number of relaxing iterations
-    nFeatureSnapIter 10;  // Number of feature snapping iterations
+    nSmoothPatch 3;
+    tolerance 2.0;
+    nSolveIter 30;
+    nRelaxIter 5;
 }
 
 addLayersControls
@@ -1110,40 +1149,40 @@ def extract_forces_data(case_dir):
     forces_data = pd.read_csv(forces_file, delim_whitespace=True, skiprows=4)
     return forces_data
 
-def decompose_mesh():
+def decompose_mesh(case_dir):
     """Decompose the mesh for parallel processing."""
-    return_code, stdout, stderr = run_command('decomposePar')
+    return_code = run_command(f"cd {case_dir} && decomposePar")
     if return_code != 0:
         print("Error during decomposePar")
-        print(stderr.decode('utf-8'))
+        # print(stderr.decode('utf-8'))
     else:
         print("decomposePar completed successfully")
-        print(stdout.decode('utf-8'))
+        # print(stdout.decode('utf-8'))
 
-def run_parallel_simulation(num_processors):
+def run_parallel_simulation(num_processors, case_dir):
     """Run the OpenFOAM simulation in parallel."""
-    command = f'mpirun -np {num_processors} simpleFoam -parallel'
-    return_code, stdout, stderr = run_command(command)
+    command = f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel'
+    return_code = run_command(command)
     if return_code != 0:
         print("Error during parallel simulation")
-        print(stderr.decode('utf-8'))
+        # print(stderr.decode('utf-8'))
     else:
         print("Parallel simulation completed successfully")
-        print(stdout.decode('utf-8'))
+        # print(stdout.decode('utf-8'))
 
-def reconstruct_results():
+def reconstruct_results(case_dir):
     """Reconstruct the results from the parallel simulation."""
-    return_code, stdout, stderr = run_command('reconstructPar')
+    return_code = run_command(f'cd {case_dir} && reconstructPar')
     if return_code != 0:
         print("Error during reconstructPar")
-        print(stderr.decode('utf-8'))
+        # print(stderr.decode('utf-8'))
     else:
         print("reconstructPar completed successfully")
-        print(stdout.decode('utf-8'))
+        # print(stdout.decode('utf-8'))
 
 def main():
     # Set the case directory inside Docker
-    case_dir = "/home/openfoam/case"  # Directory inside Docker container
+    case_dir = "/home/openfoam/case/"  # Directory inside Docker container
     run_command(f"cd {case_dir} && rm -r ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
@@ -1159,16 +1198,11 @@ def main():
     run_command(f"cd {case_dir} && blockMesh")
     run_command(f"cd {case_dir} && createPatch -overwrite")
     run_command(f"cd {case_dir} && surfaceFeatures")
-    
-
-    # Check if .eMesh file was created
-    run_command(f"ls {case_dir}/constant/triSurface")
-
     run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
     
     # Run simpleFoam and capture log output
-    # run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
     run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
+    # run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
 
 
     # Print log output
@@ -1176,14 +1210,14 @@ def main():
     # print(f"Log Output:\n{log_output.stdout}")
     # Decompose the mesh for parallel processing
     # run in parallel mode
-    decompose_mesh()
+    # decompose_mesh(case_dir)
 
     # Run the simulation in parallel
-    num_processors = 8  # Adjust this based on your available hardware
-    run_parallel_simulation(num_processors)
+    # num_processors = 8  # Adjust this based on your available hardware
+    # run_parallel_simulation(num_processors, case_dir)
 
     # Reconstruct the results from the parallel simulation
-    reconstruct_results()
+    # reconstruct_results(case_dir)
 
     # # Extract forces data
     # forces_data = extract_forces_data(case_dir)
