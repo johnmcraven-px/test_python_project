@@ -92,6 +92,52 @@ def create_openfoam_case(case_dir, stl_file):
 
     functions
     {
+        forces
+        {
+            type                forces;
+            functionObjectLibs ("libforces.so");
+            outputControl      timeStep;
+            outputInterval     1;
+
+            patches
+            (
+                "propeller" // Patch name for the propeller
+            );
+
+            rho                 rhoInf;
+            rhoInf              1.225; // Density of air
+
+            log                 true;
+
+            CofR                (0 0 0); // Center of rotation
+        }
+
+        forceCoeffs
+        {
+            type                forceCoeffs;
+            functionObjectLibs ("libforces.so");
+            outputControl      timeStep;
+            outputInterval     1;
+
+            patches
+            (
+                "propeller" // Patch name for the propeller
+            );
+
+            rho                 rhoInf;
+            rhoInf              1.225; // Density of air
+
+            log                 true;
+
+            liftDir             (0 1 0); // Direction of lift
+            dragDir             (1 0 0); // Direction of drag
+            CofR                (0 0 0); // Center of rotation
+
+            pitchAxis           (0 0 1); // Pitch axis
+            magUInf             10; // Free stream velocity
+            lRef                1; // Reference length
+            Aref                1; // Reference area
+        }
     }
 
 
@@ -110,7 +156,7 @@ FoamFile
     object      decomposeParDict;
 }
 
-numberOfSubdomains 8;
+numberOfSubdomains 4;
 
 method          scotch;
 
@@ -497,8 +543,6 @@ FoamFile
     object      snappyHexMeshDict;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 castellatedMesh true;
 snap            true;
 addLayers       false;
@@ -530,7 +574,7 @@ castellatedMeshControls
     (
         {
             file "propeller.eMesh";
-            level 1;
+            level 3;
         }
     );
 
@@ -538,17 +582,11 @@ castellatedMeshControls
     {
         propeller
         {
-            level (2 2);
-            faceZone propellerZone;
-            cellZone propellerZone;
-            cellZoneInside inside; // To specify the region inside the cell zone
+            level (4 5);
         }
         background
         {
             level (1 1);
-            faceZone backgroundZone;
-            cellZone backgroundZone;
-            cellZoneInside inside;
         }
     }
 
@@ -566,16 +604,16 @@ castellatedMeshControls
         }
     }
 
-    locationInMesh (0 0 0.1); // Ensure this is inside the domain
+    locationInMesh (0 0 0);  // Ensure this is inside the domain
     allowFreeStandingZoneFaces true;
 }
 
 snapControls
 {
-    nSmoothPatch 3;
-    tolerance 2.0; // Increase tolerance for better snapping
-    nSolveIter 10;
-    nRelaxIter 3;
+    nSmoothPatch 5;
+    tolerance 2.0;
+    nSolveIter 30;
+    nRelaxIter 5;
     nFeatureSnapIter 10;
     implicitFeatureSnap false;
     explicitFeatureSnap true;
@@ -589,7 +627,7 @@ addLayersControls
     {
         propeller
         {
-            nSurfaceLayers 1;
+            nSurfaceLayers 3;
         }
     }
 
@@ -936,6 +974,10 @@ boundaryField
         type            movingWallVelocity;
         value           uniform (0 0 0);
     }
+    background
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //
@@ -983,6 +1025,10 @@ boundaryField
         type            zeroGradient;
     }
     propeller
+    {
+        type            zeroGradient;
+    }
+    background
     {
         type            zeroGradient;
     }
@@ -1041,6 +1087,10 @@ boundaryField
         type            nutkWallFunction;
         value           uniform 1e-5;
     }
+    background
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //
@@ -1093,6 +1143,10 @@ boundaryField
     {
         type            kqRWallFunction;
         value           uniform 0.005;
+    }
+    background
+    {
+        type            zeroGradient;
     }
 }
 
@@ -1147,6 +1201,10 @@ boundaryField
         type            epsilonWallFunction;
         value           uniform 0.1;
     }
+    background
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //
@@ -1157,44 +1215,36 @@ boundaryField
 
 def extract_forces_data(case_dir):
     forces_file = os.path.join(case_dir, 'postProcessing/forces/0/forces.dat')
+    forces_df = pd.read_csv(forces_file)
+
+    # Inspect the first few rows to understand the structure
+    print(forces_df.head())
+
+    # Update the column names based on the structure of your forces.dat file
+    forces_df.columns = ['Time', 'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz', 'Tx', 'Ty', 'Tz', 'Vx', 'Vy', 'Vz']
+
+    # Extract thrust (assuming it's the force in the x-direction)
+    thrust = forces_df['Fx']
+
+    # Define propeller angular velocity (rad/s)
+    angular_velocity = 100.0  # Adjust according to your simulation setup
+
+    # Convert the torque column to numeric, forcing errors to NaN
+    torque = pd.to_numeric(forces_df['Mx'], errors='coerce')
+
+    # Replace NaN values with 0 (or handle them as needed)
+    torque.fillna(0, inplace=True)
+
+    # Calculate power (Power = Torque * Angular Velocity)
+    power = torque * angular_velocity
+
+    # Save results to a CSV file
+    results_df = pd.DataFrame({'Time': forces_df['Time'], 'Thrust': thrust, 'Power': power})
+    results_df.to_csv('thrust_power.csv', index=False)
+
+    print("Thrust and power data saved to thrust_power.csv")
+    return results_df
     
-    if not os.path.exists(forces_file):
-        print(f"Error: The file {forces_file} does not exist.")
-        return None
-    
-    forces_data = pd.read_csv(forces_file, delim_whitespace=True, skiprows=4)
-    return forces_data
-
-def decompose_mesh(case_dir):
-    """Decompose the mesh for parallel processing."""
-    return_code = run_command(f"cd {case_dir} && decomposePar")
-    if return_code != 0:
-        print("Error during decomposePar")
-        # print(stderr.decode('utf-8'))
-    else:
-        print("decomposePar completed successfully")
-        # print(stdout.decode('utf-8'))
-
-def run_parallel_simulation(num_processors, case_dir):
-    """Run the OpenFOAM simulation in parallel."""
-    command = f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel'
-    return_code = run_command(command)
-    if return_code != 0:
-        print("Error during parallel simulation")
-        # print(stderr.decode('utf-8'))
-    else:
-        print("Parallel simulation completed successfully")
-        # print(stdout.decode('utf-8'))
-
-def reconstruct_results(case_dir):
-    """Reconstruct the results from the parallel simulation."""
-    return_code = run_command(f'cd {case_dir} && reconstructPar')
-    if return_code != 0:
-        print("Error during reconstructPar")
-        # print(stderr.decode('utf-8'))
-    else:
-        print("reconstructPar completed successfully")
-        # print(stdout.decode('utf-8'))
 
 def main():
     # Set the case directory inside Docker
@@ -1202,6 +1252,7 @@ def main():
     run_command(f"cd {case_dir} && rm -r ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
+    num_processors = 4  # Adjust this based on your available hardware
 
     # Check if STL file exists
     if not os.path.exists(stl_file):
@@ -1214,36 +1265,27 @@ def main():
     run_command(f"cd {case_dir} && blockMesh")
     run_command(f"cd {case_dir} && createPatch -overwrite")
     run_command(f"cd {case_dir} && surfaceFeatures")
-    run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
+
+    # run parallel snappy mesh
+    run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+    run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
+    run_command(f'cd {case_dir} && reconstructParMesh -constant')
+    run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
+    
+    # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
     
     # Run simpleFoam and capture log output
     run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
 
-
-    # Print log output
-    # log_output = run_command(f"cd {case_dir} && tail -n 50 log.simpleFoam", check_output=False)
-    # print(f"Log Output:\n{log_output.stdout}")
-    # Decompose the mesh for parallel processing
-    # run in parallel mode
-    # decompose_mesh(case_dir)
-
-    # Run the simulation in parallel
-    # num_processors = 8  # Adjust this based on your available hardware
-    # run_parallel_simulation(num_processors, case_dir)
-
-    # Reconstruct the results from the parallel simulation
-    # reconstruct_results(case_dir)
+    # Run the simulation in parallel (note already decomposed)
+    # run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+    # run_command(f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel')
+    # run_command(f'cd {case_dir} && reconstructPar')
 
     # # Extract forces data
-    # forces_data = extract_forces_data(case_dir)
+    forces_data = extract_forces_data(case_dir)
+    print(forces_data.head())
     
-    # if forces_data is not None:
-    #     print(forces_data.head())
-        
-    #     # Save forces data to CSV for further analysis
-    #     forces_data.to_csv(os.path.join(case_dir, 'forces_data.csv'), index=False)
-    # else:
-    #     print("Failed to extract forces data.")
 
 if __name__ == "__main__":
     main()
