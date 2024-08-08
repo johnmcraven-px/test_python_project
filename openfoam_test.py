@@ -3,15 +3,12 @@ import os
 import pandas as pd
 import sys
 
-# Define the Docker container name
-DOCKER_CONTAINER_NAME = "openfoam_container_new"
-
 def run_command(command, check_output=True):
     """Run a shell command and log its output."""
     source_openfoam = "source /opt/openfoam10/etc/bashrc"
-    docker_command = f"docker exec -it {DOCKER_CONTAINER_NAME} bash -c '{source_openfoam} && {command}'"
+    full_command = f"bash -c '{source_openfoam} && {command}'"
     print(f"Start Command: {command}")
-    result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
+    result = subprocess.run(full_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
@@ -20,11 +17,11 @@ def run_command(command, check_output=True):
         result.check_returncode()
     return result
 
-def copy_file_to_container(local_path, container_path):
-    """Copy a file from the host to the Docker container."""
-    docker_copy_command = f"docker cp '{local_path}' '{DOCKER_CONTAINER_NAME}:{container_path}'"
-    result = subprocess.run(docker_copy_command, shell=True, capture_output=True, text=True)
-    print(f"Copy Command: {docker_copy_command}")
+def copy_file(local_path, container_path):
+    """Copy a file."""
+    copy_command = f"cp '{local_path}' '{container_path}'"
+    result = subprocess.run(copy_command, shell=True, capture_output=True, text=True)
+    print(f"Copy Command: {copy_command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
         print(f"STDERR:\n{result.stderr}")
@@ -50,7 +47,7 @@ def create_openfoam_case(case_dir, stl_file, zmeshblocks):
     create_directory_structure_in_container(case_dir)
     
     # Copy the STL file to the container
-    copy_file_to_container(stl_file, os.path.join(case_dir, 'constant/triSurface/propeller.stl'))
+    copy_file(stl_file, os.path.join(case_dir, 'constant/triSurface/propeller.stl'))
 
     # Create system/controlDict
     control_dict_content = """
@@ -146,7 +143,7 @@ def create_openfoam_case(case_dir, stl_file, zmeshblocks):
 // ************************************************************************* //
 """
     write_file("controlDict", control_dict_content)
-    copy_file_to_container("controlDict", os.path.join(case_dir, 'system/controlDict'))
+    copy_file("controlDict", os.path.join(case_dir, 'system/controlDict'))
     os.remove("controlDict")
 
     decompose_par_dict_content = """
@@ -187,7 +184,7 @@ roots           ( );
 // ************************************************************************* //
 """
     write_file("decomposeParDict", decompose_par_dict_content)
-    copy_file_to_container("decomposeParDict", os.path.join(case_dir, 'system/decomposeParDict'))
+    copy_file("decomposeParDict", os.path.join(case_dir, 'system/decomposeParDict'))
     os.remove("decomposeParDict")
 
     # Create system/fvSchemes
@@ -250,7 +247,7 @@ CourantNo       10; // Increase as needed, but ensure stability
 // ************************************************************************* //
 """
     write_file("fvSchemes", fv_schemes_content)
-    copy_file_to_container("fvSchemes", os.path.join(case_dir, 'system/fvSchemes'))
+    copy_file("fvSchemes", os.path.join(case_dir, 'system/fvSchemes'))
     os.remove("fvSchemes")
 
     # Create system/fvSolution
@@ -333,7 +330,7 @@ relaxationFactors
 // ************************************************************************* //
 """
     write_file("fvSolution", fv_solution_content)
-    copy_file_to_container("fvSolution", os.path.join(case_dir, 'system/fvSolution'))
+    copy_file("fvSolution", os.path.join(case_dir, 'system/fvSolution'))
     os.remove("fvSolution")
 
 
@@ -363,7 +360,7 @@ relaxationFactors
 
     """
     write_file("topoSetDict", topo_set_dict_content)
-    copy_file_to_container("topoSetDict", os.path.join(case_dir, 'system/topoSetDict'))
+    copy_file("topoSetDict", os.path.join(case_dir, 'system/topoSetDict'))
     os.remove("topoSetDict")
 
     # Create system/blockMeshDict
@@ -479,7 +476,7 @@ mergePatchPairs
 // ************************************************************************* //
 """.replace("ZMESHBLOCKS", f'{zmeshblocks}')
     write_file("blockMeshDict", block_mesh_dict_content)
-    copy_file_to_container("blockMeshDict", os.path.join(case_dir, 'system/blockMeshDict'))
+    copy_file("blockMeshDict", os.path.join(case_dir, 'system/blockMeshDict'))
     os.remove("blockMeshDict")
 
     create_patch_content = """
@@ -573,7 +570,7 @@ patches
 """
     # Write the createPatchDict content to a file
     write_file("createPatchDict", create_patch_content)
-    copy_file_to_container("createPatchDict", os.path.join(case_dir, 'system/createPatchDict'))
+    copy_file("createPatchDict", os.path.join(case_dir, 'system/createPatchDict'))
     os.remove("createPatchDict")
 
     # Create system/surfaceFeaturesDict
@@ -600,7 +597,7 @@ propeller
 // ************************************************************************* //
 """
     write_file("surfaceFeaturesDict", surface_features_dict_content)
-    copy_file_to_container("surfaceFeaturesDict", os.path.join(case_dir, 'system/surfaceFeaturesDict'))
+    copy_file("surfaceFeaturesDict", os.path.join(case_dir, 'system/surfaceFeaturesDict'))
     os.remove("surfaceFeaturesDict")
 
     # Create system/snappyHexMeshDict
@@ -752,7 +749,7 @@ zones
 // ************************************************************************* //
 """
     write_file("snappyHexMeshDict", snappy_hex_mesh_dict_content)
-    copy_file_to_container("snappyHexMeshDict", os.path.join(case_dir, 'system/snappyHexMeshDict'))
+    copy_file("snappyHexMeshDict", os.path.join(case_dir, 'system/snappyHexMeshDict'))
     os.remove("snappyHexMeshDict")
 
 # Create system/dynamicMeshDict
@@ -783,7 +780,7 @@ zones
 
     """
     write_file("dynamicMeshDict", dynamic_mesh_dict_content)
-    copy_file_to_container("dynamicMeshDict", os.path.join(case_dir, 'constant/dynamicMeshDict'))
+    copy_file("dynamicMeshDict", os.path.join(case_dir, 'constant/dynamicMeshDict'))
     os.remove("dynamicMeshDict")
 
     # Create constant/MRFProperties
@@ -815,7 +812,7 @@ zones
 
 """
     write_file("MRFProperties", rotating_frame_content)
-    copy_file_to_container("MRFProperties", os.path.join(case_dir, 'constant/MRFProperties'))
+    copy_file("MRFProperties", os.path.join(case_dir, 'constant/MRFProperties'))
     os.remove("MRFProperties")
 
     # Create constant/transportProperties
@@ -838,7 +835,7 @@ zones
 
 """
     write_file("transportProperties", transport_properties_content)
-    copy_file_to_container("transportProperties", os.path.join(case_dir, 'constant/transportProperties'))
+    copy_file("transportProperties", os.path.join(case_dir, 'constant/transportProperties'))
     os.remove("transportProperties")
 
     # Create constant/thermophysicalProperties
@@ -892,7 +889,7 @@ zones
 
 """
     write_file("thermophysicalProperties", thermophysical_properties_content)
-    copy_file_to_container("thermophysicalProperties", os.path.join(case_dir, 'constant/thermophysicalProperties'))
+    copy_file("thermophysicalProperties", os.path.join(case_dir, 'constant/thermophysicalProperties'))
     os.remove("thermophysicalProperties")
 
     # Create constant/physicalProperties
@@ -1013,7 +1010,7 @@ zones
 
 """
     write_file("physicalProperties", physical_properties_content)
-    copy_file_to_container("physicalProperties", os.path.join(case_dir, 'constant/physicalProperties'))
+    copy_file("physicalProperties", os.path.join(case_dir, 'constant/physicalProperties'))
     os.remove("physicalProperties")
 
     # Create constant/momentumTransport
@@ -1042,7 +1039,7 @@ RAS
 // ************************************************************************* //
 """
     write_file("momentumTransport", momentum_transport_content)
-    copy_file_to_container("momentumTransport", os.path.join(case_dir, 'constant/momentumTransport'))
+    copy_file("momentumTransport", os.path.join(case_dir, 'constant/momentumTransport'))
     os.remove("momentumTransport")
 
     # Create 0/U
@@ -1110,7 +1107,7 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("U", u_content)
-    copy_file_to_container("U", os.path.join(case_dir, '0/U'))
+    copy_file("U", os.path.join(case_dir, '0/U'))
     os.remove("U")
 
     # Create 0/p
@@ -1176,7 +1173,7 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("p", p_content)
-    copy_file_to_container("p", os.path.join(case_dir, '0/p'))
+    copy_file("p", os.path.join(case_dir, '0/p'))
     os.remove("p")
 
     # Create 0/nut
@@ -1248,7 +1245,7 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("nut", nut_content)
-    copy_file_to_container("nut", os.path.join(case_dir, '0/nut'))
+    copy_file("nut", os.path.join(case_dir, '0/nut'))
     os.remove("nut")
 
     # Create 0/k
@@ -1318,7 +1315,7 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("k", k_content)
-    copy_file_to_container("k", os.path.join(case_dir, '0/k'))
+    copy_file("k", os.path.join(case_dir, '0/k'))
     os.remove("k")
 
     # Create 0/epsilon
@@ -1388,7 +1385,7 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("epsilon", epsilon_content)
-    copy_file_to_container("epsilon", os.path.join(case_dir, '0/epsilon'))
+    copy_file("epsilon", os.path.join(case_dir, '0/epsilon'))
     os.remove("epsilon")
 
 def extract_forces_data(forces_file):
