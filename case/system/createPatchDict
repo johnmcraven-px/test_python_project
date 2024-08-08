@@ -1,0 +1,50 @@
+
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      createPatchDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+pointSync true;
+
+patches
+(
+    {
+        name inlet;
+        patchInfo
+        {
+            type patch;
+        }
+        constructFrom patches;
+        patches
+        (
+            bottom
+        );
+        faces
+        (
+            (16 0 8 17)
+        );
+    }
+    {
+        name outlet;
+        patchInfo
+        {
+            type patch;
+        }
+        constructFrom patches;
+        patches
+        (
+            top
+        );
+        faces
+        (
+            (16 6 14 17)
+        );
+    }
+);
+
+// ************************************************************************* //

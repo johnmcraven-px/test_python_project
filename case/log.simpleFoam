@@ -1,0 +1,84 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 10-e450dce21ea5
+Exec   : simpleFoam
+Date   : Aug 08 2024
+Time   : 13:27:00
+Host   : "d96f49486a88"
+PID    : 2260
+I/O    : uncollated
+Case   : /home/openfoam/case
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+
+SIMPLE: Convergence criteria found
+        p_rgh: tolerance 0.01
+        U: tolerance 0.0001
+        T: tolerance 0.01
+        "(k|epsilon|omega)": tolerance 0.001
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting viscosity model Newtonian
+Selecting turbulence model type RAS
+Selecting RAS turbulence model kEpsilon
+RAS
+{
+    model           kEpsilon;
+    turbulence      on;
+    printCoeffs     on;
+    Cmu             0.09;
+    C1              1.44;
+    C2              1.92;
+    C3              0;
+    sigmak          1;
+    sigmaEps        1.3;
+}
+
+Creating MRF zone list from MRFProperties
+No fvModels present
+No fvConstraints present
+
+Starting time loop
+
+Time = 5s
+
+DILUPBiCG:  Solving for Ux, Initial residual = 1, Final residual = 0.0350837, No Iterations 1
+DILUPBiCG:  Solving for Uy, Initial residual = 1, Final residual = 0.0293095, No Iterations 2
+DILUPBiCG:  Solving for Uz, Initial residual = 1, Final residual = 0.018472, No Iterations 2
+GAMG:  Solving for p, Initial residual = 1, Final residual = 0.053528, No Iterations 3
+time step continuity errors : sum local = 1.4902e-05, global = -4.11632e-08, cumulative = -4.11632e-08
+DILUPBiCG:  Solving for epsilon, Initial residual = 0.574912, Final residual = 0.00465692, No Iterations 1
+DILUPBiCG:  Solving for k, Initial residual = 1, Final residual = 0.0259226, No Iterations 1
+ExecutionTime = 1.23989 s  ClockTime = 1 s
+
+Time = 10s
+
+DILUPBiCG:  Solving for Ux, Initial residual = 0.182955, Final residual = 0.00211927, No Iterations 2
+DILUPBiCG:  Solving for Uy, Initial residual = 0.50677, Final residual = 0.0438759, No Iterations 1
+DILUPBiCG:  Solving for Uz, Initial residual = 0.38797, Final residual = 0.00563653, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.892817, Final residual = 0.0685221, No Iterations 2
+time step continuity errors : sum local = 0.000164513, global = -1.80117e-06, cumulative = -1.84233e-06
+DILUPBiCG:  Solving for epsilon, Initial residual = 0.0644707, Final residual = 0.00121491, No Iterations 1
+DILUPBiCG:  Solving for k, Initial residual = 0.162611, Final residual = 0.00465374, No Iterations 1
+ExecutionTime = 1.437 s  ClockTime = 1 s
+
+End
+
