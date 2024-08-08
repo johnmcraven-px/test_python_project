@@ -11,4 +11,7 @@ cp -r ../data/output output
 
 pip install pandas
 python openfoam_test.py
+rm -rf ../data/case
+mkdir ../data/case
+mv case/* ../data/case/
 # docker rm -f openfoam_container_new

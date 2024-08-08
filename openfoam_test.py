@@ -69,9 +69,9 @@ def create_openfoam_case(case_dir, stl_file):
 
     stopAt          endTime;
 
-    endTime         100; // Adjust this as needed
+    endTime         10; // Adjust this as needed
 
-    deltaT          1; // Increase this to speed up the simulation, but ensure stability
+    deltaT          5; // Increase this to speed up the simulation, but ensure stability
 
     writeControl    timeStep;
 
