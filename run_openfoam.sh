@@ -11,8 +11,8 @@ cp -r ../data/output output
 
 pip install pandas
 # python openfoam_test.py "$@"
-python convert_vtk.py
 rm -rf ../data/case
 mkdir ../data/case
 cp -r /Volumes/git/test_root/test_python_project/case/* ../data/case/
+python convert_vtk.py
 # docker rm -f openfoam_container_new

@@ -3,8 +3,8 @@ import os
 from pygltflib import GLTF2
 
 # Define the input and output directories
-input_dir = "case/VTK"
-output_dir = "case/VTK_GLB"
+input_dir = "../data/case/VTK"
+output_dir = "../data/case/VTK_GLB"
 
 
 # input_dir = "/Users/jmcraven/Documents/prototype_test/vtk/"
