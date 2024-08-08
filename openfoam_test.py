@@ -9,6 +9,7 @@ def run_command(command, check_output=True):
     """Run a shell command and log its output."""
     source_openfoam = "source /opt/openfoam10/etc/bashrc"
     docker_command = f"docker exec -it {DOCKER_CONTAINER_NAME} bash -c '{source_openfoam} && {command}'"
+    print(f'Start command: {command}')
     result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
     print(f"STDOUT:\n{result.stdout}")
@@ -1142,7 +1143,7 @@ def reconstruct_results():
 def main():
     # Set the case directory inside Docker
     case_dir = "/home/openfoam/case"  # Directory inside Docker container
-    run_command(f"cd {case_dir} && rm -r ./*")
+    run_command(f"cd {case_dir} && rm -rf ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
 

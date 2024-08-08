@@ -8,7 +8,7 @@ WORKDIR /home/openfoam
 RUN echo "source /opt/openfoam10/etc/bashrc" >> ~/.bashrc
 
 # Copy the local directory to the container
-COPY . /home/openfoam/case
+COPY case /home/openfoam/case
 
 # Set the entrypoint to bash
 ENTRYPOINT ["/bin/bash"]
