@@ -1,6 +1,6 @@
 cp -r ../data/output output
 apt-get update && apt-get install -y python3-pip
-su - openfoam
+su - openfoam <<EOF
 whoami
 pip install pandas
 cd /git
@@ -10,3 +10,4 @@ mkdir ../data/case
 
 python3 openfoam_test.py "$@"
 mv case/* ../data/case/
+EOF
