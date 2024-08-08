@@ -1,6 +1,6 @@
-cp -r ../data/output output
 apt-get update && apt-get install -y python3-pip
 su - openfoam <<EOF
+cp -r ../data/output output
 whoami
 pip install pandas
 cd /git
