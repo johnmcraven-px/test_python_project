@@ -1,2 +1,2 @@
-# blender --background --python-expr "import bpy; bpy.ops.wm.addon_install(filepath='/path/to/addons/io_mesh_stl.py'); bpy.ops.wm.addon_enable(module='io_mesh_stl')"
+blender --background --python addon_install.py
 blender --background --python blender_generate.py -- "$@"
