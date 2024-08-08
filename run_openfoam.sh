@@ -10,8 +10,8 @@ cp -r ../data/output output
 # cd ..
 
 pip install pandas
-python openfoam_test.py
+python openfoam_test.py "$@"
 rm -rf ../data/case
 mkdir ../data/case
-mv /Volumes/git/test_root/test_python_project/case/* ../data/case/
+cp -r /Volumes/git/test_root/test_python_project/case/* ../data/case/
 # docker rm -f openfoam_container_new

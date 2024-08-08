@@ -1,6 +1,7 @@
 import subprocess
 import os
 import pandas as pd
+import sys
 
 # Define the Docker container name
 DOCKER_CONTAINER_NAME = "openfoam_container_new"
@@ -9,7 +10,7 @@ def run_command(command, check_output=True):
     """Run a shell command and log its output."""
     source_openfoam = "source /opt/openfoam10/etc/bashrc"
     docker_command = f"docker exec -it {DOCKER_CONTAINER_NAME} bash -c '{source_openfoam} && {command}'"
-    print(f'Start command: {command}')
+    print(f"Start Command: {command}")
     result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
     print(f"STDOUT:\n{result.stdout}")
@@ -45,7 +46,7 @@ def write_file(filepath, content):
     with open(filepath, 'w') as f:
         f.write(content)
 
-def create_openfoam_case(case_dir, stl_file):
+def create_openfoam_case(case_dir, stl_file, zmeshblocks):
     create_directory_structure_in_container(case_dir)
     
     # Copy the STL file to the container
@@ -93,6 +94,52 @@ def create_openfoam_case(case_dir, stl_file):
 
     functions
     {
+        forces
+        {
+            type                forces;
+            functionObjectLibs ("libforces.so");
+            outputControl      timeStep;
+            outputInterval     1;
+
+            patches
+            (
+                "propeller" // Patch name for the propeller
+            );
+
+            rho                 rhoInf;
+            rhoInf              1.225; // Density of air
+
+            log                 true;
+
+            CofR                (0 0 0); // Center of rotation
+        }
+
+        forceCoeffs
+        {
+            type                forceCoeffs;
+            functionObjectLibs ("libforces.so");
+            outputControl      timeStep;
+            outputInterval     1;
+
+            patches
+            (
+                "propeller" // Patch name for the propeller
+            );
+
+            rho                 rhoInf;
+            rhoInf              1.225; // Density of air
+
+            log                 true;
+
+            liftDir             (0 1 0); // Direction of lift
+            dragDir             (1 0 0); // Direction of drag
+            CofR                (0 0 0); // Center of rotation
+
+            pitchAxis           (0 0 1); // Pitch axis
+            magUInf             10; // Free stream velocity
+            lRef                1; // Reference length
+            Aref                1; // Reference area
+        }
     }
 
 
@@ -101,6 +148,47 @@ def create_openfoam_case(case_dir, stl_file):
     write_file("controlDict", control_dict_content)
     copy_file_to_container("controlDict", os.path.join(case_dir, 'system/controlDict'))
     os.remove("controlDict")
+
+    decompose_par_dict_content = """
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+
+numberOfSubdomains 4;
+
+method          scotch;
+
+simpleCoeffs
+{
+    n               (2 2 1);
+    delta           0.001;
+}
+
+hierarchicalCoeffs
+{
+    n               (1 1 1);
+    delta           0.001;
+    order           xyz;
+}
+
+manualCoeffs
+{
+    dataFile        "";
+}
+
+distributed     no;
+
+roots           ( );
+
+// ************************************************************************* //
+"""
+    write_file("decomposeParDict", decompose_par_dict_content)
+    copy_file_to_container("decomposeParDict", os.path.join(case_dir, 'system/decomposeParDict'))
+    os.remove("decomposeParDict")
 
     # Create system/fvSchemes
     fv_schemes_content = """
@@ -248,6 +336,36 @@ relaxationFactors
     copy_file_to_container("fvSolution", os.path.join(case_dir, 'system/fvSolution'))
     os.remove("fvSolution")
 
+
+    # Create system/topoSetDict
+    topo_set_dict_content = """
+    FoamFile
+    {
+        version     2.0;
+        format      ascii;
+        class       dictionary;
+        object      topoSetDict;
+    }
+
+    actions
+    (
+        {
+            name    propellerZone;
+            type    cellSet;
+            action  new;
+            source  boxToCell;
+            sourceInfo
+            {
+                box (2 2 -0.5) (4 4 0.5); // Define the bounding box for the propeller zone
+            }
+        }
+    );
+
+    """
+    write_file("topoSetDict", topo_set_dict_content)
+    copy_file_to_container("topoSetDict", os.path.join(case_dir, 'system/topoSetDict'))
+    os.remove("topoSetDict")
+
     # Create system/blockMeshDict
     block_mesh_dict_content = """
 FoamFile
@@ -286,10 +404,10 @@ vertices
 
 blocks
 (
-    hex (16 0 1 2 17 8 9 10) (100 100 1) simpleGrading (1 1 1)
-    hex (16 2 3 4 17 10 11 12) (100 100 1) simpleGrading (1 1 1)
-    hex (16 4 5 6 17 12 13 14) (100 100 1) simpleGrading (1 1 1)
-    hex (16 6 7 0 17 14 15 8) (100 100 1) simpleGrading (1 1 1)
+    hex (16 0 1 2 17 8 9 10) (20 20 ZMESHBLOCKS) simpleGrading (1 1 1)
+    hex (16 2 3 4 17 10 11 12) (20 20 ZMESHBLOCKS) simpleGrading (1 1 1)
+    hex (16 4 5 6 17 12 13 14) (20 20 ZMESHBLOCKS) simpleGrading (1 1 1)
+    hex (16 6 7 0 17 14 15 8) (20 20 ZMESHBLOCKS) simpleGrading (1 1 1)
 );
 
 edges
@@ -359,7 +477,7 @@ mergePatchPairs
 );
 
 // ************************************************************************* //
-"""
+""".replace("ZMESHBLOCKS", f'{zmeshblocks}')
     write_file("blockMeshDict", block_mesh_dict_content)
     copy_file_to_container("blockMeshDict", os.path.join(case_dir, 'system/blockMeshDict'))
     os.remove("blockMeshDict")
@@ -375,7 +493,7 @@ FoamFile
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-pointSync true;
+pointSync false;
 
 patches
 (
@@ -411,6 +529,44 @@ patches
             (16 6 14 17)
         );
     }
+    {
+        name    rotatingAMI;
+        patchInfo
+        {
+            type    cyclicAMI;
+            neighbourPatch staticAMI;
+        }
+        constructFrom    patches;
+        patches
+        (
+            rotatingWall
+        );
+    }
+    {
+        name    staticAMI;
+        patchInfo
+        {
+            type    cyclicAMI;
+            neighbourPatch rotatingAMI;
+        }
+        constructFrom    patches;
+        patches
+        (
+            staticWall
+        );
+    }
+    {
+        name    rotatingWall;
+        patchInfo
+        {
+            type    wall;
+        }
+        constructFrom    patches;
+        patches
+        (
+            rotatingWallSource
+        );
+    }
 );
 
 // ************************************************************************* //
@@ -435,8 +591,10 @@ FoamFile
 propeller
 {
     surfaces ("propeller.stl");
-    includedAngle 120;
-    
+
+    includedAngle   100;
+    extractionMethod    extractFromSurface;
+
 }
 
 // ************************************************************************* //
@@ -455,17 +613,22 @@ FoamFile
     object      snappyHexMeshDict;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 castellatedMesh true;
 snap            true;
 addLayers       false;
+
 geometry
-{   
+{
     propeller.stl
     {
-        type            triSurfaceMesh;
-        name            propeller;
+        type triSurfaceMesh;
+        name propeller;
+    }
+    background
+    {
+        type searchableBox;
+        min (-5 -5 -2.5);
+        max (5 5 2.5);
     }
 }
 
@@ -475,12 +638,13 @@ castellatedMeshControls
     maxGlobalCells 2000000;
     minRefinementCells 10;
     nCellsBetweenLevels 3;
+    resolveFeatureAngle 30;
 
     features
     (
         {
             file "propeller.eMesh";
-            level 1;
+            level 3;
         }
     );
 
@@ -488,45 +652,54 @@ castellatedMeshControls
     {
         propeller
         {
-            level (2 2);
-            regions
-            {
-                propellerPatch
-                {
-                    name propeller;
-                    type wall;
-                }
-            }
+            level (4 5);
+        }
+        background
+        {
+            level (1 1);
         }
     }
-
-    resolveFeatureAngle 30;
 
     refinementRegions
     {
-        propellerZone
+        propeller
         {
             mode inside;
-            levels ((1e15 2));
+            levels ((1.0 4));
+        }
+        background
+        {
+            mode inside;
+            levels ((1.0 2));
         }
     }
 
-    locationInMesh (0 0 0);  // Ensure this point is inside your mesh
+    locationInMesh (0 0 0);  // Ensure this is inside the domain
     allowFreeStandingZoneFaces true;
 }
 
 snapControls
 {
-    nSmoothPatch 3;
+    nSmoothPatch 5;
     tolerance 2.0;
     nSolveIter 30;
     nRelaxIter 5;
+    nFeatureSnapIter 10;
+    implicitFeatureSnap false;
+    explicitFeatureSnap true;
+    multiRegionFeatureSnap true;
 }
 
 addLayersControls
 {
     relativeSizes true;
-    layers { }
+    layers
+    {
+        propeller
+        {
+            nSurfaceLayers 3;
+        }
+    }
 
     expansionRatio 1.0;
     finalLayerThickness 0.3;
@@ -546,7 +719,7 @@ addLayersControls
 
 meshQualityControls
 {
-    maxNonOrtho 65;
+    maxNonOrtho 30;
     maxBoundarySkewness 20;
     maxInternalSkewness 4;
     maxConcave 80;
@@ -570,7 +743,9 @@ zones
     propellerZone
     {
         type cellZone;
-        name propellerZone;
+        level (5 5);
+        min (-1 -1 -2.5);
+        max (1 1 2.5);
     }
 }
 
@@ -579,6 +754,37 @@ zones
     write_file("snappyHexMeshDict", snappy_hex_mesh_dict_content)
     copy_file_to_container("snappyHexMeshDict", os.path.join(case_dir, 'system/snappyHexMeshDict'))
     os.remove("snappyHexMeshDict")
+
+# Create system/dynamicMeshDict
+    dynamic_mesh_dict_content = """
+    FoamFile
+    {
+        version     2.0;
+        format      ascii;
+        class       dictionary;
+        object      dynamicMeshDict;
+    }
+
+    dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+    motionSolverLibs ( "libfvMotionSolvers.so" );
+
+    propellerMotion
+    {
+        type        solidBodyMotionFunction;
+        function    rotatingMotion;
+        solidBodyMotionFunctionCoeffs
+        {
+            origin      (0 0 0);    // Center of rotation
+            axis        (0 0 1);    // Axis of rotation
+            omega       constant 100; // Angular velocity in rad/s
+        }
+    }
+
+    """
+    write_file("dynamicMeshDict", dynamic_mesh_dict_content)
+    copy_file_to_container("dynamicMeshDict", os.path.join(case_dir, 'constant/dynamicMeshDict'))
+    os.remove("dynamicMeshDict")
 
     # Create constant/MRFProperties
     rotating_frame_content = """
@@ -594,12 +800,14 @@ zones
     (
         propellerZone
         {
-            cellZone    propellerZone; // Name of the cell zone from snappyHexMeshDict
+            cellZone    propellerZone;  // Name of the cell zone
             active      yes;
-            nonRotatingPatches ();
-            origin      (0 0 0); // Center of rotation, adjust as necessary
-            axis        (0 0 1); // Axis of rotation
-            omega       30; // Rotational speed in rad/s
+
+            nonRotatingPatches (inlet outlet);
+
+            origin      (0 0 0);    // Center of rotation
+            axis        (0 0 1);    // Axis of rotation
+            omega       100;        // Angular velocity in rad/s
         }
     );
 
@@ -774,7 +982,7 @@ zones
         maxFaceThicknessRatio 0.5;
         maxThicknessToMedialRatio 0.3;
         minMedianAxisAngle 130;
-        maxSkewness 4.0;
+        maxSkewness 2.0;
         maxBoundarySkewness 20;
         nBufferCellsNoExtrude 0;
         nLayerIter 50;
@@ -782,9 +990,9 @@ zones
 
     meshQualityControls
     {
-        maxNonOrtho 65;
-        maxBoundarySkewness 20;
-        maxInternalSkewness 4;
+        maxNonOrtho 30;
+        maxBoundarySkewness 10;
+        maxInternalSkewness 2;
         maxConcave 80;
         minFlatness 0.5;
         minVol 1e-13;
@@ -857,7 +1065,7 @@ boundaryField
     inlet
     {
         type            fixedValue;
-        value           uniform (1 0 0);
+        value           uniform (0 0 10);
     }
     outlet
     {
@@ -879,6 +1087,23 @@ boundaryField
     {
         type            movingWallVelocity;
         value           uniform (0 0 0);
+    }
+    background
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
     }
 }
 
@@ -929,6 +1154,22 @@ boundaryField
     propeller
     {
         type            zeroGradient;
+    }
+    background
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            zeroGradient;
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
     }
 }
 
@@ -985,6 +1226,23 @@ boundaryField
         type            nutkWallFunction;
         value           uniform 1e-5;
     }
+    background
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            nutkWallFunction;
+        value           uniform 0.1;
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
+    }
 }
 
 // ************************************************************************* //
@@ -1037,6 +1295,23 @@ boundaryField
     {
         type            kqRWallFunction;
         value           uniform 0.005;
+    }
+    background
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            kqRWallFunction;
+        value           uniform 0.1;
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
     }
 }
 
@@ -1091,6 +1366,23 @@ boundaryField
         type            epsilonWallFunction;
         value           uniform 0.1;
     }
+    background
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            epsilonWallFunction;
+        value           uniform 0.1;
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
+    }
 }
 
 // ************************************************************************* //
@@ -1099,101 +1391,86 @@ boundaryField
     copy_file_to_container("epsilon", os.path.join(case_dir, '0/epsilon'))
     os.remove("epsilon")
 
-def extract_forces_data(case_dir):
-    forces_file = os.path.join(case_dir, 'postProcessing/forces/0/forces.dat')
+def extract_forces_data(forces_file):
+    forces_df = pd.read_csv(forces_file, sep='\s+', comment='#', header=None)
+
+    # Inspect the first few rows to understand the structure
+    print(forces_df.head())
+
+    # Update the column names based on the structure of your forces.dat file
+    forces_df.columns = ['Time', 'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz', 'Tx', 'Ty', 'Tz', 'Vx', 'Vy', 'Vz']
+
+    # Extract thrust (assuming it's the force in the x-direction)
+    thrust = forces_df['Fx']
+
+    # Define propeller angular velocity (rad/s)
+    angular_velocity = 100.0  # Adjust according to your simulation setup
+
+    # Convert the torque column to numeric, forcing errors to NaN
+    torque = pd.to_numeric(forces_df['Mx'], errors='coerce')
+
+    # Replace NaN values with 0 (or handle them as needed)
+    torque.fillna(0, inplace=True)
+
+    # Calculate power (Power = Torque * Angular Velocity)
+    power = torque * angular_velocity
+
+    # Save results to a CSV file
+    results_df = pd.DataFrame({'Time': forces_df['Time'], 'Thrust': thrust, 'Power': power})
+    results_df.to_csv('thrust_power.csv', index=False)
+
+    print("Thrust and power data saved to thrust_power.csv")
+    return results_df
     
-    if not os.path.exists(forces_file):
-        print(f"Error: The file {forces_file} does not exist.")
-        return None
-    
-    forces_data = pd.read_csv(forces_file, delim_whitespace=True, skiprows=4)
-    return forces_data
-
-def decompose_mesh():
-    """Decompose the mesh for parallel processing."""
-    return_code, stdout, stderr = run_command('decomposePar')
-    if return_code != 0:
-        print("Error during decomposePar")
-        print(stderr.decode('utf-8'))
-    else:
-        print("decomposePar completed successfully")
-        print(stdout.decode('utf-8'))
-
-def run_parallel_simulation(num_processors):
-    """Run the OpenFOAM simulation in parallel."""
-    command = f'mpirun -np {num_processors} simpleFoam -parallel'
-    return_code, stdout, stderr = run_command(command)
-    if return_code != 0:
-        print("Error during parallel simulation")
-        print(stderr.decode('utf-8'))
-    else:
-        print("Parallel simulation completed successfully")
-        print(stdout.decode('utf-8'))
-
-def reconstruct_results():
-    """Reconstruct the results from the parallel simulation."""
-    return_code, stdout, stderr = run_command('reconstructPar')
-    if return_code != 0:
-        print("Error during reconstructPar")
-        print(stderr.decode('utf-8'))
-    else:
-        print("reconstructPar completed successfully")
-        print(stdout.decode('utf-8'))
 
 def main():
     # Set the case directory inside Docker
-    case_dir = "/home/openfoam/case"  # Directory inside Docker container
-    run_command(f"cd {case_dir} && rm -rf ./*")
+    case_dir = "/home/openfoam/case/"  # Directory inside Docker container
+    forces_file = 'openfoam_case/postProcessing/forces/0/forces.dat'
+    # run_command(f"cd {case_dir} && rm -r ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
+    num_processors = 4  # Adjust this based on your available hardware
 
     # Check if STL file exists
     if not os.path.exists(stl_file):
         raise FileNotFoundError(f"STL file {stl_file} not found")
 
     # Setup the OpenFOAM case
-    create_openfoam_case(case_dir, stl_file)
+    zmeshblocks = sys.argv[1]
+    if zmeshblocks is None:
+        raise Exception("Expected zmeshblocks arg")
+    create_openfoam_case(case_dir, stl_file, zmeshblocks)
 
     # Run OpenFOAM commands inside Docker container
     run_command(f"cd {case_dir} && blockMesh")
     run_command(f"cd {case_dir} && createPatch -overwrite")
     run_command(f"cd {case_dir} && surfaceFeatures")
-    
 
-    # Check if .eMesh file was created
-    run_command(f"ls {case_dir}/constant/triSurface")
+    # run parallel snappy mesh
+    run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+    run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
+    run_command(f'cd {case_dir} && reconstructParMesh -constant')
+    run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
+    # run_command(f'cd {case_dir} && touch mesh.foam')
+    # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
 
-    run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
+    #run topo for dynamic
+    run_command(f"cd {case_dir} && topoSet")
     
     # Run simpleFoam and capture log output
-    # run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
     run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
 
-
-    # Print log output
-    # log_output = run_command(f"cd {case_dir} && tail -n 50 log.simpleFoam", check_output=False)
-    # print(f"Log Output:\n{log_output.stdout}")
-    # Decompose the mesh for parallel processing
-    # run in parallel mode
-    decompose_mesh()
-
-    # Run the simulation in parallel
-    num_processors = 2  # Adjust this based on your available hardware
-    run_parallel_simulation(num_processors)
-
-    # Reconstruct the results from the parallel simulation
-    reconstruct_results()
+    # Run the simulation in parallel (note already decomposed)
+    # run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+    # run_command(f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel')
+    # run_command(f'cd {case_dir} && reconstructPar')
+    run_command(f'cd {case_dir} && foamToVTK')
 
     # # Extract forces data
-    # forces_data = extract_forces_data(case_dir)
+    forces_data = extract_forces_data(forces_file)
+    print(forces_data.head())
     
-    # if forces_data is not None:
-    #     print(forces_data.head())
-        
-    #     # Save forces data to CSV for further analysis
-    #     forces_data.to_csv(os.path.join(case_dir, 'forces_data.csv'), index=False)
-    # else:
-    #     print("Failed to extract forces data.")
 
 if __name__ == "__main__":
     main()
