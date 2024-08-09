@@ -2,7 +2,6 @@ apt-get update && apt-get install -y python3-pip
 chown -R openfoam /data/
 chown -R openfoam /git/
 su - openfoam <<EOF
-set +e
 cd /git
 cp -r ../data/output output
 whoami
@@ -12,7 +11,11 @@ mkdir case
 mkdir ../data/case
 
 echo "TEST0"
-python3 openfoam_test.py "$@"
+python3 openfoam_test.py "$@";
+EOF
+
+su - openfoam <<EOF
+cd /git
 echo "TEST1"
 ls case
 mv case/* ../data/case/
