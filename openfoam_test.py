@@ -1422,7 +1422,7 @@ def extract_forces_data(forces_file):
 
 def main():
     # Set the case directory inside Docker
-    case_dir = "/home/openfoam/case/"  # Directory inside Docker container
+    case_dir = "/git/case/"  # Directory inside Docker container
     forces_file = 'openfoam_case/postProcessing/forces/0/forces.dat'
     # run_command(f"cd {case_dir} && rm -r ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host

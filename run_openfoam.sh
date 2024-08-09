@@ -2,6 +2,7 @@ apt-get update && apt-get install -y python3-pip
 chown -R openfoam /data/
 chown -R openfoam /git/
 su - openfoam <<EOF
+set +e
 cd /git
 cp -r ../data/output output
 whoami
