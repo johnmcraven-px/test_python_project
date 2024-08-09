@@ -7,14 +7,28 @@ import json
 from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, ComponentLayoutType, LayoutType, UpdatesFromSignalsRequest, UpdatesFromSignalsResponse
 
 def getLayout() -> LayoutType:
-    row = RowLayoutType(
+    row1 = RowLayoutType(
+        type="row",
+        className="items-stretch",
+        style=None,
+        content=[
+            ComponentLayoutType(
+                type="component",
+                className="flex-1",
+                style=None,
+                componentName="ExperimentSelectorView",
+                componentState={}
+            ),
+        ]
+    )
+    row2 = RowLayoutType(
         type="row",
         className="items-stretch",
         style={"minHeight": 400},
         content=[
             ComponentLayoutType(
                 type="component",
-                className=None,
+                className="flex-1",
                 style={"minHeight": 400},
                 componentName="TransformRunView",
                 componentState={}
@@ -26,7 +40,8 @@ def getLayout() -> LayoutType:
         className=None,
         style=None,
         content=[
-            row
+            row1,
+            row2
 
         ]
     )
