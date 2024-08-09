@@ -16,9 +16,7 @@ EOF
 
 su - openfoam <<EOF
 cd /git
-echo "TEST1"
-ls case
 mv case/* ../data/case/
-echo "TEST2"
+echo "Contents of /data/case:"
 ls ../data/case
 EOF
