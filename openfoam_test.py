@@ -1465,8 +1465,8 @@ def main():
     run_command(f'cd {case_dir} && foamToVTK')
 
     # # Extract forces data
-    forces_data = extract_forces_data(forces_file)
-    print(forces_data.head())
+    # forces_data = extract_forces_data(forces_file)
+    # print(forces_data.head())
     
 
 if __name__ == "__main__":

@@ -11,5 +11,9 @@ mkdir case
 mkdir ../data/case
 
 python3 openfoam_test.py "$@"
+echo "TEST1"
+ls case
 mv case/* ../data/case/
+echo "TEST2"
+ls ../data/case
 EOF
