@@ -1429,44 +1429,49 @@ def main():
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
     num_processors = 4  # Adjust this based on your available hardware
 
-    # Check if STL file exists
-    if not os.path.exists(stl_file):
-        raise FileNotFoundError(f"STL file {stl_file} not found")
+    try:
+        # Check if STL file exists
+        if not os.path.exists(stl_file):
+            raise FileNotFoundError(f"STL file {stl_file} not found")
 
-    # Setup the OpenFOAM case
-    zmeshblocks = sys.argv[1]
-    if zmeshblocks is None:
-        raise Exception("Expected zmeshblocks arg")
-    create_openfoam_case(case_dir, stl_file, zmeshblocks)
+        # Setup the OpenFOAM case
+        zmeshblocks = sys.argv[1]
+        if zmeshblocks is None:
+            raise Exception("Expected zmeshblocks arg")
+        create_openfoam_case(case_dir, stl_file, zmeshblocks)
 
-    # Run OpenFOAM commands inside Docker container
-    run_command(f"cd {case_dir} && blockMesh")
-    run_command(f"cd {case_dir} && createPatch -overwrite")
-    run_command(f"cd {case_dir} && surfaceFeatures")
+        # Run OpenFOAM commands inside Docker container
+        run_command(f"cd {case_dir} && blockMesh")
+        run_command(f"cd {case_dir} && createPatch -overwrite")
+        run_command(f"cd {case_dir} && surfaceFeatures")
 
-    # run parallel snappy mesh
-    run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-    run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
-    run_command(f'cd {case_dir} && reconstructParMesh -constant')
-    run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
-    # run_command(f'cd {case_dir} && touch mesh.foam')
-    # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
+        # run parallel snappy mesh
+        run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+        run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
+        run_command(f'cd {case_dir} && reconstructParMesh -constant')
+        run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
+        # run_command(f'cd {case_dir} && touch mesh.foam')
+        # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
 
-    #run topo for dynamic
-    run_command(f"cd {case_dir} && topoSet")
-    
-    # Run simpleFoam and capture log output
-    run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
+        #run topo for dynamic
+        run_command(f"cd {case_dir} && topoSet")
+        
+        # Run simpleFoam and capture log output
+        run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
 
-    # Run the simulation in parallel (note already decomposed)
-    # run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-    # run_command(f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel')
-    # run_command(f'cd {case_dir} && reconstructPar')
-    run_command(f'cd {case_dir} && foamToVTK')
+        # Run the simulation in parallel (note already decomposed)
+        # run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+        # run_command(f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel')
+        # run_command(f'cd {case_dir} && reconstructPar')
+        run_command(f'cd {case_dir} && foamToVTK')
 
-    # # Extract forces data
-    # forces_data = extract_forces_data(forces_file)
-    # print(forces_data.head())
+        # # Extract forces data
+        # forces_data = extract_forces_data(forces_file)
+        # print(forces_data.head())
+    except e:
+        print("An error occurred:", e)
+        # Print the stack trace
+        traceback.print_exc()
     
 
 if __name__ == "__main__":
