@@ -1449,7 +1449,7 @@ def main():
         run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
         run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
         run_command(f'cd {case_dir} && reconstructParMesh -constant')
-        run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
+        # run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
         # run_command(f'cd {case_dir} && touch mesh.foam')
         # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
 
