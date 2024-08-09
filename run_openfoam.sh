@@ -10,6 +10,7 @@ echo "source /opt/openfoam10/etc/bashrc" >> ~/.bashrc
 mkdir case
 mkdir ../data/case
 
+echo "TEST0"
 python3 openfoam_test.py "$@"
 echo "TEST1"
 ls case
