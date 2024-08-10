@@ -33,6 +33,13 @@ def getLayout() -> LayoutType:
                 componentName="TransformRunView",
                 componentState={}
             ),
+            ComponentLayoutType(
+                type="component",
+                className="flex-1",
+                style={"minHeight": 400},
+                componentName="BatchRunTableView",
+                componentState={}
+            ),
         ]
     )
     return ListLayoutType(
