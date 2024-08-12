@@ -19,7 +19,7 @@ def getLayout() -> LayoutType:
                 className="flex-1",
                 style=None,
                 componentName="ExperimentSelectorView",
-                componentState={"paramControls": [blade_length, num_blades]}
+                componentState={}
             ),
         ]
     )
@@ -33,7 +33,7 @@ def getLayout() -> LayoutType:
                 className="flex-1",
                 style={"minHeight": 400},
                 componentName="TransformRunView",
-                componentState={}
+                componentState={"paramControls": [blade_length, num_blades]}
             ),
             ComponentLayoutType(
                 type="component",
