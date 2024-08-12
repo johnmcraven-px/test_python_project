@@ -2,6 +2,25 @@
 from pydantic import BaseModel
 from typing import Dict, List, Any, Union, Literal, Optional, ForwardRef
 
+# export interface IParamControl {
+#   type: "range",
+#   labelTitle: string;
+#   displayName: string;
+#   numberType: "integer" | "float";
+#   defaultStart: number;
+#   defaultEnd: number;
+#   defaultStep: number;
+# }
+
+class ParamControl(BaseModel):
+    type: Literal["range"]
+    labelTitle: str
+    displayName: str
+    numberType: Union[Literal["integer"], Literal["float"]]
+    defaultStart: Union[float | int]
+    defaultEnd: Union[float | int]
+    defaultStep: Union[float | int]
+
 class RowLayoutType(BaseModel):
     type: Literal["row"]
     className: Optional[str]
