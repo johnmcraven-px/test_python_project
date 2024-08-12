@@ -60,7 +60,7 @@ def create_openfoam_case(case_dir, stl_file):
         location    "system";
         object      controlDict;
     }
-    application     simpleFoam;
+    application     rhoSimpleFoam;
 
     startFrom       startTime;
 
@@ -202,7 +202,7 @@ FoamFile
 
 ddtSchemes
 {
-    default         steadyState;
+    default         Euler;
 }
 
 gradSchemes
@@ -214,14 +214,22 @@ divSchemes
 {
     default         none;
     div(phi,U)      Gauss linearUpwind grad(U);
-    div(phi,k)      Gauss linearUpwind grad(k);
-    div(phi,epsilon) Gauss linearUpwind grad(epsilon);
-    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+    div(phi,k)      Gauss upwind;
+    div(phi,epsilon) Gauss upwind;
+    div(phi,Ekp)    Gauss upwind;
+    div(phi,e)      Gauss upwind;  // Added for energy equation
+    div(phi,Ek)     Gauss upwind;  // Added for kinetic energy
+    div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
+    div(phi,div(U)) Gauss linear;
+    div(phi,T)      Gauss upwind;
+    div((muEff*dev2(T(grad(U))))) Gauss linear;
+    div((phi*U))    Gauss linear;
+    div(R)          Gauss linear;
 }
 
 laplacianSchemes
 {
-    default         Gauss linear orthogonal;
+    default         Gauss linear corrected;
 }
 
 interpolationSchemes
@@ -231,7 +239,7 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         orthogonal;
+    default         corrected;
 }
 
 fluxRequired
@@ -239,10 +247,7 @@ fluxRequired
     default         no;
     p;
     phi;
-    rho;
 }
-
-CourantNo       10; // Increase as needed, but ensure stability
 
 
 // ************************************************************************* //
@@ -269,7 +274,7 @@ solvers
     {
         solver          GAMG;
         tolerance       1e-6;
-        relTol          0.1;
+        relTol          0.01;
         smoother        DIC;
         nPreSweeps      0;
         nPostSweeps     2;
@@ -280,12 +285,35 @@ solvers
         mergeLevels     1;
     }
 
-    "(U|k|epsilon|omega)"
+    U
     {
-        solver          PBiCG;
+        solver          PBiCGStab;
         preconditioner  DILU;
-        smoother        DILU;
-        tolerance       1e-5;
+        tolerance       1e-6;
+        relTol          0.1;
+    }
+
+    "(k|epsilon|omega)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-6;
+        relTol          0.1;
+    }
+
+    e
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-6;
+        relTol          0.1;
+    }
+
+    rho
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-6;
         relTol          0.1;
     }
 }
@@ -293,26 +321,7 @@ solvers
 SIMPLE
 {
     nNonOrthogonalCorrectors 0;
-    pRefCell        0;
-    pRefValue       0;
-
-    residualControl
-    {
-        p_rgh           1e-2; // when you need dynamic pressure
-        U               1e-4;
-        T               1e-2;
-
-        // possibly check turbulence fields
-        "(k|epsilon|omega)" 1e-3;
-    }
-}
-
-PISO
-{
-    nCorrectors     2;
-    nNonOrthogonalCorrectors 0;
-    pRefCell        0;
-    pRefValue       0;
+    consistent yes;
 }
 
 relaxationFactors
@@ -320,13 +329,15 @@ relaxationFactors
     fields
     {
         p               0.3;
+        rho             0.7;
     }
+
     equations
     {
-        U               0.7;
-        "(k|epsilon|omega|R)" 0.7;
+        "(U|k|epsilon|omega|e)" 0.7;
     }
 }
+
 
 // ************************************************************************* //
 """
@@ -753,7 +764,7 @@ zones
     copy_file_to_container("snappyHexMeshDict", os.path.join(case_dir, 'system/snappyHexMeshDict'))
     os.remove("snappyHexMeshDict")
 
-# Create system/dynamicMeshDict
+    # Create system/dynamicMeshDict
     dynamic_mesh_dict_content = """
     FoamFile
     {
@@ -801,7 +812,7 @@ zones
             cellZone    propellerZone;  // Name of the cell zone
             active      yes;
 
-            nonRotatingPatches (inlet outlet);
+            nonRotatingPatches (inlet outlet background);
 
             origin      (0 0 0);    // Center of rotation
             axis        (0 0 1);    // Axis of rotation
@@ -828,9 +839,13 @@ zones
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    transportModel  Newtonian;
+    transportModel  sutherland;
 
-    nu              [0 2 -1 0 0 0 0] 1.5e-5;
+    SutherlandCoeffs
+    {
+        As              1.458e-6;
+        Ts              110.4;
+    }
 
     // ************************************************************************* //
 
@@ -870,19 +885,28 @@ zones
             nMoles          1;
             molWeight       28.97;
         }
+
         equationOfState
         {
-            R               287.058;
+            perfectGas;
+            R               287;
         }
+
         thermodynamics
         {
+            Tlow            200;
+            Thigh           5000;
+            Tcommon         300;
             Cp              1005;
             Hf              0;
         }
+
         transport
         {
-            mu              1.8e-05;
+            mu              1.7894e-05;
             Pr              0.7;
+            As              1.458e-6;     // Sutherland constant
+            Ts              110.4;        // Sutherland temperature
         }
     }
 
@@ -1010,9 +1034,9 @@ zones
     mergeTolerance 1e-6;
 
 """
-    write_file("physicalProperties", physical_properties_content)
-    copy_file_to_container("physicalProperties", os.path.join(case_dir, 'constant/physicalProperties'))
-    os.remove("physicalProperties")
+    # write_file("physicalProperties", physical_properties_content)
+    # copy_file_to_container("physicalProperties", os.path.join(case_dir, 'constant/physicalProperties'))
+    # os.remove("physicalProperties")
 
     # Create constant/momentumTransport
     momentum_transport_content = """
@@ -1063,7 +1087,7 @@ boundaryField
     inlet
     {
         type            fixedValue;
-        value           uniform (0 0 10);
+        value           uniform (0 0 -10);
     }
     outlet
     {
@@ -1075,11 +1099,12 @@ boundaryField
     }
     bottom
     {
-        type            noSlip;
+        type            fixedValue;
+        value           uniform (0 0 -10);
     }
     top
     {
-        type            slip;
+        type            zeroGradient;
     }
     propeller
     {
@@ -1122,7 +1147,7 @@ FoamFile
     object      p;
 }
 
-dimensions      [0 2 -2 0 0 0 0];
+dimensions      [1 -1 -2 0 0 0 0];
 
 internalField   uniform 0;
 
@@ -1147,7 +1172,8 @@ boundaryField
     }
     top
     {
-        type            zeroGradient;
+        type            fixedValue;
+        value           uniform 0;
     }
     propeller
     {
@@ -1211,7 +1237,7 @@ boundaryField
     }
     bottom
     {
-        type            nutkWallFunction;
+        type            calculated;
         value           uniform 1e-5;
     }
     top
@@ -1282,7 +1308,7 @@ boundaryField
     }
     bottom
     {
-        type            kqRWallFunction;
+        type            fixedValue;
         value           uniform 0.01;
     }
     top
@@ -1352,7 +1378,7 @@ boundaryField
     }
     bottom
     {
-        type            epsilonWallFunction;
+        type            fixedValue;
         value           uniform 0.01;
     }
     top
@@ -1388,6 +1414,174 @@ boundaryField
     write_file("epsilon", epsilon_content)
     copy_file_to_container("epsilon", os.path.join(case_dir, '0/epsilon'))
     os.remove("epsilon")
+
+    # Create 0/T
+    T_content = """
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      T;
+}
+
+dimensions      [0 0 0 1 0 0 0];
+internalField   uniform 300;
+
+boundaryField
+{
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 300;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            zeroGradient;
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
+    }
+    propeller
+    {
+        type            zeroGradient;
+    }
+    background
+    {
+        type            zeroGradient;
+    }
+}
+
+"""
+    write_file("T", T_content)
+    copy_file_to_container("T", os.path.join(case_dir, '0/T'))
+    os.remove("T")
+
+    # Create 0/rho
+    rho_content = """
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      rho;
+}
+
+dimensions      [1 -3 0 0 0 0 0];
+internalField   uniform 1.225;
+
+boundaryField
+{
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 1.225;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
+    rotatingWall
+    {
+        type            zeroGradient;
+    }
+    rotatingAMI
+    {
+        type            cyclicAMI;
+    }
+    staticAMI
+    {
+        type            cyclicAMI;
+    }
+    propeller
+    {
+        type            zeroGradient;
+    }
+    background
+    {
+        type            zeroGradient;
+    }
+}
+
+"""
+    write_file("rho", rho_content)
+    copy_file_to_container("rho", os.path.join(case_dir, '0/rho'))
+    os.remove("rho")
+
+    # Create 0/alphat
+    alphat_content = """
+    FoamFile
+    {
+        version     2.0;
+        format      ascii;
+        class       volScalarField;
+        location    "0";
+        object      alphat;
+    }
+
+    dimensions      [1 -1 -1 0 0 0 0];
+    internalField   uniform 0.01;
+
+    boundaryField
+    {
+        inlet
+        {
+            type            zeroGradient;
+        }
+        outlet
+        {
+            type            zeroGradient;
+        }
+        walls
+        {
+            type            calculated;
+            value           uniform 0.01;
+        }
+        rotatingWall
+        {
+            type            calculated;
+            value           uniform 0.01;
+        }
+        rotatingAMI
+        {
+            type            cyclicAMI;
+        }
+        staticAMI
+        {
+            type            cyclicAMI;
+        }
+        propeller
+        {
+            type            zeroGradient;
+        }
+        background
+        {
+            type            zeroGradient;
+        }
+    }
+"""
+    write_file("alphat", alphat_content)
+    copy_file_to_container("alphat", os.path.join(case_dir, '0/alphat'))
+    os.remove("alphat")
 
 def extract_forces_data(forces_file):
     forces_df = pd.read_csv(forces_file, sep='\s+', comment='#', header=None)
@@ -1425,7 +1619,7 @@ def main():
     # Set the case directory inside Docker
     case_dir = "/home/openfoam/case/"  # Directory inside Docker container
     forces_file = 'openfoam_case/postProcessing/forces/0/forces.dat'
-    # run_command(f"cd {case_dir} && rm -r ./*")
+    run_command(f"cd {case_dir} && rm -r ./*")
     stl_file = os.path.expanduser("./output/propeller.stl")  # STL file on the host
     stl_file_in_container = os.path.join(case_dir, "constant/triSurface/propeller.stl")
     num_processors = 4  # Adjust this based on your available hardware
@@ -1446,18 +1640,17 @@ def main():
     run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
     run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
     run_command(f'cd {case_dir} && reconstructParMesh -constant')
-    run_command(f'cd {case_dir} && mpirun -np {num_processors} reconstructPar')
     # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
 
     #run topo for dynamic
     run_command(f"cd {case_dir} && topoSet")
     
     # Run simpleFoam and capture log output
-    run_command(f"cd {case_dir} && simpleFoam &> log.simpleFoam", check_output=False)
+    # run_command(f"cd {case_dir} && rhoSimpleFoam &> log.rhoSimpleFoam", check_output=False)
 
     # Run the simulation in parallel (note already decomposed)
     run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-    run_command(f'cd {case_dir} && mpirun -np {num_processors} simpleFoam -parallel')
+    run_command(f'cd {case_dir} && mpirun -np {num_processors} rhoSimpleFoam -parallel')
     run_command(f'cd {case_dir} && reconstructPar')
 
     # # Extract forces data

@@ -3,9 +3,12 @@ output/
 
 #openfoam_case
 openfoam_case/
+openfoam_tutorial_case/
 
 #csv
 *.csv
+*.foam
+*.vtk
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
