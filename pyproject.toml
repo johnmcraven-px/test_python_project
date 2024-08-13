@@ -15,6 +15,10 @@ package-mode = false
 python = "^3.10"
 fastapi = "^0.111.1"
 altair = {extras = ["all"], version = "^5.3.0"}
+pandas = "^2.2.2"
+torch = "^2.4.0"
+torchvision = "^0.19.0"
+scikit-learn = "^1.5.1"
 
 
 [tool.poetry.group.dev.dependencies]
