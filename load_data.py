@@ -4,6 +4,11 @@ import torchvision
 import torchvision.transforms as transforms
 from PIL import Image
 import json
+import tarfile
+
+def create_tar_gz(source_dir, output_filename):
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 # Define the transformation
 transform = transforms.Compose([
@@ -46,6 +51,8 @@ def save_images(dataset, directory):
 
 # Save training images
 save_images(trainset, train_dir)
+
+create_tar_gz(train_dir, f'{train_dir}.tgz')
 
 # Save test images
 #save_images(testset, test_dir)
