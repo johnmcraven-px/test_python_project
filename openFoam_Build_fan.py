@@ -7,7 +7,7 @@ DOCKER_CONTAINER_NAME = "openfoam_container_new2"
 
 def run_command(command, check_output=True):
     """Run a shell command and log its output."""
-    source_openfoam = "source /opt/openfoam10/etc/bashrc"
+    source_openfoam = "source /opt/openfoam-dev/etc/bashrc"
     docker_command = f"docker exec -it {DOCKER_CONTAINER_NAME} bash -c '{source_openfoam} && {command}'"
     result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
@@ -45,8 +45,15 @@ def write_file(filepath, content):
     with open(filepath, 'w') as f:
         f.write(content)
 
-def create_openfoam_control(case_dir, sim_end_time):
+def create_openfoam_control(case_dir, sim_end_time, time_step, write_interval):
     control_dict_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -64,13 +71,13 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         """ + str(sim_end_time) +""";
+endTime         """ + str(sim_end_time) + """;
 
-deltaT          0.0002;
+deltaT          """ + str(time_step) + """;
 
 writeControl    adjustableRunTime;
 
-writeInterval   0.02;
+writeInterval   """ + str(write_interval) + """;
 
 purgeWrite      0;
 
@@ -107,6 +114,13 @@ functions
 
 def create_openfoam_blockmesh(case_dir):
     block_mesh_dict_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -167,6 +181,13 @@ boundary
 
 def create_openfoam_createpatch(case_dir):
     create_patch_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -185,7 +206,7 @@ patches
         name            AMI1;
         patchInfo
         {
-            type            cyclicAMI;
+            type            cyclicSlip;
             matchTolerance  0.0015;
             neighbourPatch  AMI2;
             transform       none;
@@ -199,7 +220,7 @@ patches
         name            AMI2;
         patchInfo
         {
-            type            cyclicAMI;
+            type            cyclicSlip;
             matchTolerance  0.0015;
             neighbourPatch  AMI1;
             transform       none;
@@ -219,6 +240,13 @@ patches
 
 def create_openfoam_decomposepar(case_dir, number_of_subdomains):
     decompose_par_dict_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -249,6 +277,13 @@ hierarchicalCoeffs
 
 def create_openfoam_fvschemes(case_dir):
     fv_schemes_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -310,6 +345,13 @@ wallDist
 
 def create_openfoam_fvsolution(case_dir):
     fv_solution_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -367,26 +409,124 @@ PIMPLE
     copy_file_to_container("fvSolution", os.path.join(case_dir, 'system/fvSolution'))
     os.remove("fvSolution")
 
-def create_openfoam_relvelocity(case_dir, rotation_speed):
+def create_openfoam_relvelocity(case_dir):
     rel_velocity_content = """
+// --------------------------------*- C++ -*-------------------------------- //
+//
+// File
+//     OpenFOAM coded function object
+//
+// Description
+//     Write relative rotational speed
+//
+// ------------------------------------------------------------------------- //
+
 relVelocity
 {
     type coded;
     name relVelocity;
-    libs ("libutilityFunctionObjects.so");
+    libs ( "libutilityFunctionObjects.so" );
 
     writeControl writeTime;
 
     coeffs
     {
         // User input (duplicate of constant/dynamicMeshDict)
-        origin  (-3 2 2.6);
-        axis    (0 0 1);
-        omega   """ + str(rotation_speed) + """;
-        zones   ( rotatingZone );
+        // origin  (-3 2 2.6);
+        // axis    (0 0 1);
+        // omega   10;
+        // zones   ( rotatingZone );
 
-        #include "./constant/dynamicMeshDict"
+        #include "../constant/dynamicMeshDict"
     }
+
+    // Additional context for code execute/write
+    codeContext
+    {
+        verbose true;
+    }
+
+    codeData
+    #{
+        vector origin;
+        vector omega;
+        wordRes zoneNames;
+    #};
+
+    codeRead
+    #{
+        const dictionary& coeffs = dict.optionalSubDict("coeffs");
+        const dictionary& context = this->codeContext();
+
+        origin = coeffs.get<vector>("origin");
+
+        omega =
+        (
+            // speed
+            (
+                coeffs.found("rpm")
+              ? degToRad(coeffs.get<scalar>("rpm") / 60.0)
+              : coeffs.get<scalar>("omega")
+            )
+            // axis
+          * normalised(coeffs.getOrDefault<vector>("axis", vector(0,0,1)))
+        );
+
+        if (!coeffs.readIfPresent("zones", zoneNames))
+        {
+            if (coeffs.found("cellZone"))
+            {
+                zoneNames.resize(1);
+                coeffs.readEntry("cellZone", zoneNames[0]);
+            }
+        }
+
+        if (context.getOrDefault<bool>("verbose", false))
+        {
+            Log<< "Relative velocity at origin " << origin << "\n";
+        }
+    #};
+
+    codeWrite
+    #{
+        const dictionary& context = this->codeContext();
+
+        if (context.getOrDefault<bool>("verbose", false))
+        {
+            Log<< "Calculate relative velocity\n";
+        }
+
+        const auto& cc = mesh().C();
+        const auto& U = mesh().lookupObject<volVectorField>("U");
+
+        auto trelVel = volVectorField::New
+        (
+            "relVelocity",
+            mesh(),
+            dimensionedVector(dimVelocity, Zero),
+            fvPatchVectorField::zeroGradientType()
+        );
+        auto& relVel = trelVel.ref();
+        auto& relVelField = relVel.primitiveFieldRef();
+
+        if (zoneNames.empty())
+        {
+            for (label celli = 0; celli < mesh().nCells(); ++celli)
+            {
+                relVelField[celli] = U[celli] - (omega ^ (cc[celli] - origin));
+            }
+        }
+        else
+        {
+            for (const label celli : mesh().cellZones().selection(zoneNames))
+            {
+                relVelField[celli] = U[celli] - (omega ^ (cc[celli] - origin));
+            }
+        }
+
+        relVel.correctBoundaryConditions();
+        relVel.write();
+    #};
 }
 
 
@@ -398,6 +538,13 @@ relVelocity
 
 def create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level):
     snappy_hex_mesh_dict_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -412,13 +559,43 @@ snap            true;
 addLayers       false;
 
 geometry
-{
-    AMI.stl{ type triSurfaceMesh; name AMI;}
-    door.stl{ type triSurfaceMesh; name door;}
-    fan.stl{ type triSurfaceMesh; name fan;}
-    outlet.stl{ type triSurfaceMesh; name outlet;}
-    room.stl{ type triSurfaceMesh; name room;}
-    desk.stl{ type triSurfaceMesh; name desk;}
+{   AMI
+    {
+        file "AMI.stl";
+        type triSurfaceMesh; 
+        name AMI;
+    }
+    
+    door
+    {
+        file "door.stl";
+        type triSurfaceMesh; 
+        name door;
+    }
+    fan
+    {
+        file "fan.stl";
+        type triSurfaceMesh;
+        name fan;
+    }
+    outlet
+    {
+        file "outlet.stl";
+        type triSurfaceMesh; 
+        name outlet;
+    }
+    room
+    {
+        file "room.stl";
+        type triSurfaceMesh; 
+        name room;
+    }
+    desk
+    {
+        file "desk.stl";
+        type triSurfaceMesh;
+        name desk;
+    }
 }
 
 castellatedMeshControls
@@ -443,17 +620,17 @@ castellatedMeshControls
     {
         AMI
         {
-            level (""" + str(fine_mesh_level) + " " + + str(fine_mesh_level) + """); // Note: better: levels 3 3
+            level (""" + str(fine_mesh_level) + " " + str(fine_mesh_level) + """); // Note: better: levels 3 3
             faceType boundary;
             cellZone rotatingZone;
             faceZone rotatingZone;
             cellZoneInside inside;
         }
-        fan{ level (""" + str(fine_mesh_level) + " " + + str(fine_mesh_level) + """));} // Note: better: levels 3 3
-        door{ level (""" + str(course_mesh_level) + " " + + str(course_mesh_level) + """));}
-        outlet{ level """ + str(course_mesh_level) + " " + + str(course_mesh_level) + """);}
-        room{ level (""" + str(course_mesh_level) + " " + + str(course_mesh_level) + """);}
-        desk{ level """ + str(course_mesh_level + 1) + " " + + str(course_mesh_level + 1) + """);}
+        fan{ level (""" + str(fine_mesh_level) + " " + str(fine_mesh_level) + """);} // Note: better: levels 3 3
+        door{ level (""" + str(course_mesh_level) + " " + str(course_mesh_level) + """);}
+        outlet{ level (""" + str(course_mesh_level) + " " + str(course_mesh_level) + """);}
+        room{ level (""" + str(course_mesh_level) + " " + str(course_mesh_level) + """);}
+        desk{ level (""" + str(course_mesh_level + 1) + " " + str(course_mesh_level + 1) + """);}
     }
 
     resolveFeatureAngle 30;
@@ -537,6 +714,13 @@ mergeTolerance 1e-6;
 
 def create_openfoam_surfacefeatures(case_dir):
     surface_features_dict_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -591,6 +775,13 @@ desk
 
 def create_openfoam_transportproperties(case_dir):
     transport_properties_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -614,6 +805,13 @@ nu              1e-05;
 
 def create_openfoam_dynamicmesh(case_dir, rotation_speed):
     dynamic_mesh_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -623,9 +821,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+type            motionSolver;
+
 dynamicFvMesh   dynamicMotionSolverFvMesh;
 
-motionSolverLibs (fvMotionSolvers);
+libe            ("libfvMeshMovers.so" "libfvMotionSolvers.so");
 
 motionSolver    solidBody;
 
@@ -646,6 +846,13 @@ omega       """ + str(rotation_speed) + """;
 
 def create_openfoam_g(case_dir):
     g_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -667,6 +874,13 @@ value           (0 0 -9.81);
 
 def create_openfoam_turbulenceproperties(case_dir):
     turbulence_properties_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -697,6 +911,13 @@ RAS
 
 def create_openfoam_initial_condition_u(case_dir):
     u_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -712,19 +933,15 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    allBoundary
-    {
-        type            noSlip;
-    }
     AMI1
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform (0 0 0);
     }
 
     AMI2
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform (0 0 0);
     }
 
@@ -766,6 +983,13 @@ boundaryField
 
 def create_openfoam_initial_condition_p(case_dir):
     p_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -781,20 +1005,15 @@ internalField   uniform 0;
 
 boundaryField
 {
-    allBoundary
-    {
-        type            fixedFluxPressure;
-        value           uniform 0;
-    }
     AMI1
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 0;
     }
 
     AMI2
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 0;
     }
 
@@ -838,6 +1057,13 @@ boundaryField
 
 def create_openfoam_initial_condition_nut(case_dir):
     nut_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -853,19 +1079,15 @@ internalField   uniform 1e-5;
 
 boundaryField
 {
-    allBoundary
-    {
-        type            zeroGradient;
-    }
     AMI1
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 1e-5;
     }
 
     AMI2
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 1e-5;
     }
 
@@ -907,6 +1129,13 @@ boundaryField
 
 def create_openfoam_initial_condition_k(case_dir):
     k_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -922,19 +1151,15 @@ internalField   uniform 0.00341;
 
 boundaryField
 {
-    allBoundary
-    {
-        type            zeroGradient;
-    }
     AMI1
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 0.00341;
     }
 
     AMI2
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 0.00341;
     }
 
@@ -978,6 +1203,13 @@ boundaryField
 
 def create_openfoam_initial_condition_omega(case_dir):
     omega_content = """
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -993,19 +1225,15 @@ internalField   uniform 0.1;
 
 boundaryField
 {
-    allBoundary
-    {
-        type            zeroGradient;
-    }
     AMI1
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 0.1;
     }
 
     AMI2
     {
-        type            cyclicAMI;
+        type            cyclicSlip;
         value           uniform 0.1;
     }
 
@@ -1052,13 +1280,16 @@ def create_openfoam_case(case_dir, number_of_subdomains):
     fine_mesh_level = 2 
     course_mesh_level = 0
     rotation_speed = 10 # radians per second
-    create_openfoam_control(case_dir, sim_end_time)
+    time_step = 0.0002 # recommended setting is 0.0002
+    write_interval = 0.02 # recommended setting is 0.02
+
+    create_openfoam_control(case_dir, sim_end_time, time_step, write_interval)
     create_openfoam_blockmesh(case_dir)
     create_openfoam_createpatch(case_dir)
     create_openfoam_decomposepar(case_dir, number_of_subdomains)
     create_openfoam_fvschemes(case_dir)
     create_openfoam_fvsolution(case_dir)
-    create_openfoam_relvelocity(case_dir, rotation_speed)
+    create_openfoam_relvelocity(case_dir)
     create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level)
     create_openfoam_surfacefeatures(case_dir)
     create_openfoam_transportproperties(case_dir)
@@ -1079,52 +1310,74 @@ def create_openfoam_initial_conditions(case_dir):
 def main():
     # Set the number processors 
     num_processors = 4
+    
+    write_files = True
+    
+    build_mesh = True
+    mesh_par = False
+    
+    sim_par = False
+    run_sim = True
+
 
     # Set the case directory inside Docker
     case_dir = "/home/openfoam/case/"  # Directory inside Docker container]
+    if write_files:
+        # clean up files 
+        run_command(f"cd {case_dir} && rm -R ./*")
 
-    # clean up files 
-    run_command(f"cd {case_dir} && rm -r ./*")
+        # create directory structure
+        create_directory_structure_in_container(case_dir)
 
-    # create directory structure
-    create_directory_structure_in_container(case_dir)
+        # move the stl files to the right location
+        stl_files_source = os.path.expanduser("./output/geometry/")  # STL file on the host
+        stl_files_container_location = os.path.join(case_dir, "constant/geometry/")
 
-    # move the stl files to the right location
-    stl_files_source = os.path.expanduser("./output/geometry_new/")  # STL file on the host
-    stl_files_container_location = os.path.join(case_dir, "constant/geometry/")
-    # run_command(f"cd {case_dir} && mkdir {stl_files_container_location}")
-    copy_file_to_container(stl_files_source + "AMI.stl", stl_files_container_location)
-    copy_file_to_container(stl_files_source + "desk.stl", stl_files_container_location)
-    copy_file_to_container(stl_files_source + "door.stl", stl_files_container_location)
-    copy_file_to_container(stl_files_source + "fan.stl", stl_files_container_location)
-    copy_file_to_container(stl_files_source + "outlet.stl", stl_files_container_location)
-    copy_file_to_container(stl_files_source + "room.stl", stl_files_container_location)
-
-
-    # Setup the OpenFOAM case
-    create_openfoam_case(case_dir, number_of_subdomains=num_processors)
-
-    # set up the openfoam simualtion
-    run_command(f"cd {case_dir} && touch open.foam")
-    run_command(f"cd {case_dir} && surfaceFeatures")
-    run_command(f"cd {case_dir} && blockMesh")
     
-    run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-    run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
-    run_command(f'cd {case_dir} && reconstructParMesh -constant')
-    # run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
-    run_command(f"cd {case_dir} && rm -rf 0")
-    run_command(f"cd {case_dir} && renumberMesh -overwrite")
-    run_command(f"cd {case_dir} && createPatch -overwrite")
-    create_openfoam_initial_conditions(case_dir)
+        # run_command(f"cd {case_dir} && mkdir {stl_files_container_location}")
+        copy_file_to_container(stl_files_source + "AMI.stl", stl_files_container_location)
+        copy_file_to_container(stl_files_source + "desk.stl", stl_files_container_location)
+        copy_file_to_container(stl_files_source + "door.stl", stl_files_container_location)
+        copy_file_to_container(stl_files_source + "fan.stl", stl_files_container_location)
+        copy_file_to_container(stl_files_source + "outlet.stl", stl_files_container_location)
+        copy_file_to_container(stl_files_source + "room.stl", stl_files_container_location)
+
+
+        # Setup the OpenFOAM case
+        create_openfoam_case(case_dir, number_of_subdomains=num_processors)
+
+    if build_mesh:
+        # set up the openfoam simualtion
+        run_command(f"cd {case_dir} && touch open.foam")
+        run_command(f"cd {case_dir} && surfaceFeatures")
+        run_command(f"cd {case_dir} && blockMesh")
+    
+        if mesh_par: 
+            run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+            run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
+            run_command(f'cd {case_dir} && reconstructParMesh -constant')
+        else:
+            run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
+    
+    
+        run_command(f"cd {case_dir} && rm -rf 0")
+        run_command(f"cd {case_dir} && renumberMesh -overwrite")
+        run_command(f"cd {case_dir} && createPatch -overwrite")
+
+    if write_files:
+        create_openfoam_initial_conditions(case_dir)
 
     # Run the simulation in parallel (note already decomposed)
-    run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-    run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam')
-    run_command(f'cd {case_dir} && reconstructPar')
-    run_command(f'cd {case_dir} && foamToVTK')
-    # generate VTK files and post process 
-
+    if run_sim:
+        if sim_par:
+            run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+            run_command(f'cd {case_dir} && mpirun -np {num_processors} foamRun -solver incompressibleFluid -parallel > log.foamRun')
+            run_command(f'cd {case_dir} && reconstructPar')
+        else:
+            run_command(f'cd {case_dir} && foamRun -solver incompressibleFluid > log.foamRun')
+        
+        # generate VTK files and post process 
+        run_command(f'cd {case_dir} && foamToVTK')
     
 
 if __name__ == "__main__":
