@@ -3,7 +3,7 @@ import math
 from mathutils import Matrix
 
 # Set the output path
-output_path = './openfoam_tutorial_case/geometry_new'
+output_path = './geometry_new'
 
 # Delete the default cube if it exists
 if "Cube" in bpy.data.objects:

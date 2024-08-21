@@ -7,7 +7,7 @@ DOCKER_CONTAINER_NAME = "openfoam_container_new2"
 
 def run_command(command, check_output=True):
     """Run a shell command and log its output."""
-    source_openfoam = "source /opt/openfoam-dev/etc/bashrc"
+    source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
     docker_command = f"docker exec -it {DOCKER_CONTAINER_NAME} bash -c '{source_openfoam} && {command}'"
     result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
@@ -101,7 +101,7 @@ maxDeltaT       1;
 
 functions
 {
-    #include "relVelocity"
+    #include "relVelocity";
 }
 
 
@@ -206,10 +206,10 @@ patches
         name            AMI1;
         patchInfo
         {
-            type            cyclicSlip;
-            matchTolerance  0.0015;
+            type            cyclicAMI;
+            matchTolerance  0.0001;
             neighbourPatch  AMI2;
-            transform       none;
+            transform       noOrdering;
         }
         constructFrom patches;
         patches (AMI);
@@ -220,10 +220,10 @@ patches
         name            AMI2;
         patchInfo
         {
-            type            cyclicSlip;
-            matchTolerance  0.0015;
+            type            cyclicAMI;
+            matchTolerance  0.0001;
             neighbourPatch  AMI1;
-            transform       none;
+            transform       noOrdering;
         }
         constructFrom patches;
         patches (AMI_slave);
@@ -425,7 +425,7 @@ relVelocity
 {
     type coded;
     name relVelocity;
-    libs ( "libutilityFunctionObjects.so" );
+    libs ( utilityFunctionObjects );
 
     writeControl writeTime;
 
@@ -437,7 +437,7 @@ relVelocity
         // omega   10;
         // zones   ( rotatingZone );
 
-        #include "../constant/dynamicMeshDict"
+        #sinclude "../constant/dynamicMeshDict"
     }
 
     // Additional context for code execute/write
@@ -483,7 +483,7 @@ relVelocity
 
         if (context.getOrDefault<bool>("verbose", false))
         {
-            Log<< "Relative velocity at origin " << origin << "\n";
+            Log<< "Relative velocity at origin " << origin << " ";
         }
     #};
 
@@ -493,7 +493,7 @@ relVelocity
 
         if (context.getOrDefault<bool>("verbose", false))
         {
-            Log<< "Calculate relative velocity\n";
+            Log<< "Calculate relative velocity ";
         }
 
         const auto& cc = mesh().C();
@@ -730,48 +730,48 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-AMI
+AMI.stl
 {
-    surfaces ("AMI.stl");
+    extractionMethod    extractFromSurface;
     includedAngle       150;
 }
 
-door
+door.stl
 {
-    surfaces ("door.stl");
+    extractionMethod    extractFromSurface;
     includedAngle       150;
 }
 
-fan
+fan.stl
 {
-    surfaces ("fan.stl");
+    extractionMethod    extractFromSurface;
     includedAngle       150;
 }
 
-outlet
+outlet.stl
 {
-    surfaces ("outlet.stl");
+    extractionMethod    extractFromSurface;
     includedAngle       150;
 }
 
-room
+room.stl
 {
-    surfaces ("room.stl");
+    extractionMethod    extractFromSurface;
     includedAngle       150;
 }
 
-desk
+desk.stl
 {
-    surfaces ("desk.stl");
+    extractionMethod    extractFromSurface;
     includedAngle       150;
 }
 
 
 // ************************************************************************* //
 """
-    write_file("surfaceFeaturesDict", surface_features_dict_content)
-    copy_file_to_container("surfaceFeaturesDict", os.path.join(case_dir, 'system/surfaceFeaturesDict'))
-    os.remove("surfaceFeaturesDict")
+    write_file("surfaceFeatureExtractDict", surface_features_dict_content)
+    copy_file_to_container("surfaceFeatureExtractDict", os.path.join(case_dir, 'system/surfaceFeatureExtractDict'))
+    os.remove("surfaceFeatureExtractDict")
 
 def create_openfoam_transportproperties(case_dir):
     transport_properties_content = """
@@ -821,11 +821,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type            motionSolver;
-
 dynamicFvMesh   dynamicMotionSolverFvMesh;
 
-libe            ("libfvMeshMovers.so" "libfvMotionSolvers.so");
+motionSolverLibs (fvMotionSolvers);
 
 motionSolver    solidBody;
 
@@ -935,13 +933,13 @@ boundaryField
 {
     AMI1
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform (0 0 0);
     }
 
     AMI2
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform (0 0 0);
     }
 
@@ -1007,13 +1005,13 @@ boundaryField
 {
     AMI1
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 0;
     }
 
     AMI2
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 0;
     }
 
@@ -1081,13 +1079,13 @@ boundaryField
 {
     AMI1
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 1e-5;
     }
 
     AMI2
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 1e-5;
     }
 
@@ -1153,13 +1151,13 @@ boundaryField
 {
     AMI1
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 0.00341;
     }
 
     AMI2
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 0.00341;
     }
 
@@ -1227,13 +1225,13 @@ boundaryField
 {
     AMI1
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 0.1;
     }
 
     AMI2
     {
-        type            cyclicSlip;
+        type            cyclicAMI;
         value           uniform 0.1;
     }
 
@@ -1331,7 +1329,7 @@ def main():
 
         # move the stl files to the right location
         stl_files_source = os.path.expanduser("./output/geometry/")  # STL file on the host
-        stl_files_container_location = os.path.join(case_dir, "constant/geometry/")
+        stl_files_container_location = os.path.join(case_dir, "constant/triSurface/")
 
     
         # run_command(f"cd {case_dir} && mkdir {stl_files_container_location}")
@@ -1349,7 +1347,7 @@ def main():
     if build_mesh:
         # set up the openfoam simualtion
         run_command(f"cd {case_dir} && touch open.foam")
-        run_command(f"cd {case_dir} && surfaceFeatures")
+        run_command(f"cd {case_dir} && surfaceFeatureExtract")
         run_command(f"cd {case_dir} && blockMesh")
     
         if mesh_par: 
@@ -1371,10 +1369,10 @@ def main():
     if run_sim:
         if sim_par:
             run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-            run_command(f'cd {case_dir} && mpirun -np {num_processors} foamRun -solver incompressibleFluid -parallel > log.foamRun')
+            run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam')
             run_command(f'cd {case_dir} && reconstructPar')
         else:
-            run_command(f'cd {case_dir} && foamRun -solver incompressibleFluid > log.foamRun')
+            run_command(f'cd {case_dir} && pimpleFoam > log.pimpleFoam')
         
         # generate VTK files and post process 
         run_command(f'cd {case_dir} && foamToVTK')

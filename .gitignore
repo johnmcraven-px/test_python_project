@@ -1,9 +1,11 @@
 #output
 output/
+geometry_new/
 
 #openfoam_case
 openfoam_case/
 openfoam_tutorial_case/
+case/
 
 #csv
 *.csv

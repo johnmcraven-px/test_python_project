@@ -9,7 +9,7 @@ This is a demo
 ## Usage
 to run the blender file use: 
 ''' bash
-/Applications/Blender.app/Contents/MacOS/Blender --background --python blender\ test.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --python blender_build_fan.py
 ''' 
 
 /Applications/Blender.app/Contents/MacOS/Blender --background --python blender_export_properties.py -- ./openfoam_tutorial_case/geometry/fan.blend ./openfoam_tutorial_case/geometry/output.txt
