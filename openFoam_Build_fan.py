@@ -34,7 +34,7 @@ def create_directory_structure_in_container(case_dir):
         os.path.join(case_dir, 'constant'),
         # os.path.join(case_dir, 'constant/polyMesh'),
         os.path.join(case_dir, 'constant/triSurface'),
-        os.path.join(case_dir, 'constant/geometry'),
+        # os.path.join(case_dir, 'constant/geometry'),
         os.path.join(case_dir, 'system'),
         os.path.join(case_dir, '0')
     ]
@@ -1328,7 +1328,7 @@ def main():
         create_directory_structure_in_container(case_dir)
 
         # move the stl files to the right location
-        stl_files_source = os.path.expanduser("./output/geometry/")  # STL file on the host
+        stl_files_source = os.path.expanduser("./output/geometry_mix/")  # STL file on the host
         stl_files_container_location = os.path.join(case_dir, "constant/triSurface/")
 
     

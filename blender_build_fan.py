@@ -3,7 +3,7 @@ import math
 from mathutils import Matrix
 
 # Set the output path
-output_path = './geometry_new'
+output_path = './output/geometry_new'
 
 # Delete the default cube if it exists
 if "Cube" in bpy.data.objects:
@@ -187,27 +187,15 @@ def create_ami(diameter, height, x_position, y_position, z_position):
     return ami
 
 # Room dimensions and placement
-room_length = 5.85
+room_length = 5.86
 room_width = 4.85
 room_height = 2.8
-center_x = -3
-center_y = 2
+room_center_x = -2.7
+room_center_y = 2
 bottom_z = 0
 
 # Create the room
-room = create_room(room_length, room_width, room_height, center_x, center_y, bottom_z)
-
-# Desk dimensions and placement
-desk_top_length = 2.34896
-desk_top_width = 1.2
-desk_top_thickness = 0.1
-desk_leg_height = 0.86672
-desk_leg_x = 0.15  # 15 cm
-desk_leg_y = 0.05  # 5 cm
-desk_z = 0.84172  # The top of the desk
-
-# Create the desk as a single object
-desk = create_desk(desk_top_length, desk_top_width, desk_top_thickness, desk_leg_height, desk_leg_x, desk_leg_y, desk_z, center_x, center_y)
+room = create_room(room_length, room_width, room_height, room_center_x, room_center_y, bottom_z)
 
 # Fan dimensions and placement
 fan_center_x = -3
@@ -223,6 +211,18 @@ twist_angle = 20  # 20 degree twist
 
 # Create the fan (hub and blades)
 fan_hub = create_fan(4, blade_length, blade_width, blade_height, blade_thickness, hub_radius, hub_height, twist_angle, fan_center_x, fan_center_y, fan_z)
+
+# Desk dimensions and placement
+desk_top_length = 2.34896
+desk_top_width = 1.2
+desk_top_thickness = 0.1
+desk_leg_height = 0.86672
+desk_leg_x = 0.15  # 15 cm
+desk_leg_y = 0.05  # 5 cm
+desk_z = 0.84172  # The top of the desk
+
+# Create the desk as a single object
+desk = create_desk(desk_top_length, desk_top_width, desk_top_thickness, desk_leg_height, desk_leg_x, desk_leg_y, desk_z, fan_center_x, fan_center_y)
 
 # Pole dimensions and placement
 pole_diameter = 0.03  # 3 cm
@@ -242,8 +242,8 @@ fan_hub.name = "Fan"
 # Door dimensions and placement
 door_height = 2.1  # 2.1 m
 door_width = 0.768006  # 0.768006 m
-door_x = -3 + room_length / 2  # Positioned on the wall at the right end of the room
-door_y = 2  # Positioned at y = 2
+door_x = -room_center_x + room_length / 2  # Positioned on the wall at the right end of the room
+door_y = room_center_y  # Positioned at y = 2
 
 # Create the door as a cube with 0 thickness
 door = create_door(door_height, door_width, door_x, door_y)
@@ -251,8 +251,8 @@ door = create_door(door_height, door_width, door_x, door_y)
 # Outlet dimensions and placement
 outlet_height = 1.05  # 1.05 m
 outlet_width = 0.845193  # 0.845193 m
-outlet_x = -3 - room_length / 2  # Positioned on the wall at the left end of the room
-outlet_y = 2  # Positioned at y = 2
+outlet_x = -room_center_x - room_length / 2  # Positioned on the wall at the left end of the room
+outlet_y = room_center_y  # Positioned at y = 2
 outlet_z = door_height - outlet_height / 2  # Positioned so the top is at the same height as the door
 
 # Create the outlet as a cube with 0 thickness
@@ -261,8 +261,8 @@ outlet = create_outlet(outlet_height, outlet_width, outlet_x, outlet_y, outlet_z
 # AMI dimensions and placement
 ami_diameter = 1.3 * 2 * blade_length  # Diameter is 1.3 times twice the blade length
 ami_height = 0.64  # 0.64 m height
-ami_x = -3  # x position is -3
-ami_y = 2  # y position is 2
+ami_x = -fan_center_x  # x position is -3
+ami_y = fan_center_y  # y position is 2
 ami_z = room_height - ami_height / 2 + 0.01  # z position is room height minus half the AMI height plus 1 cm
 
 # Create the AMI cylinder
