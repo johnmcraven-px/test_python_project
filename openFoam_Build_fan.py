@@ -45,7 +45,7 @@ def write_file(filepath, content):
     with open(filepath, 'w') as f:
         f.write(content)
 
-def create_openfoam_control(case_dir, sim_end_time, time_step, write_interval):
+def create_openfoam_control(case_dir, sim_end_time, time_step, write_interval, center_of_rotation):
     control_dict_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -101,6 +101,42 @@ maxDeltaT       1;
 
 functions
 {
+    forces
+    {
+        type forces;                   // Specifies the type of function
+        libs (forces);      // Explicitly load the forces library
+        writeControl writeTime;          // Controls when the forces are written
+        patches ( fan );              // Specify the patches to apply the forces on
+        // Field names
+        p               p;
+        U               U;
+        rho             rhoInf;
+        rhoInf  1.25;                 // Name of the density field (optional for compressible flows)
+        log true;                       // Log the results
+        CofR """ + center_of_rotation + """;                   // Center of rotation for moment calculations
+    }
+
+    forceCoeffs
+    {
+        type            forceCoeffs;           // Specifies the type of function
+        libs            (forces);      // Explicitly load the forces library
+        writeControl    writeTime;              // Controls when the coefficients are written
+        patches         (fan);               // Specify the patches to apply the force coefficients on
+        // Field names
+        p               p;
+        U               U;
+        rho             rhoInf;
+
+        rhoInf          1.25;                // Name of the density field (used for compressible flows)
+        log             true;                  // Log the results
+        liftDir         (0 0 1);               // Direction for lift coefficient calculation
+        dragDir         (0 1 0);               // Direction for drag coefficient calculation
+        pitchAxis       (0 0 1);               // Axis about which the moment is calculated
+        magUInf         1;                     // Freestream velocity magnitude
+        lRef            1;                     // Reference length (used for calculating moment coefficient)
+        Aref            1;                     // Reference area (used for calculating lift and drag coefficients)
+        CofR """ + center_of_rotation + """;                   // Center of rotation for moment calculations
+    }
     #include "relVelocity";
 }
 
@@ -803,7 +839,7 @@ nu              1e-05;
     copy_file_to_container("transportProperties", os.path.join(case_dir, 'constant/transportProperties'))
     os.remove("transportProperties")
 
-def create_openfoam_dynamicmesh(case_dir, rotation_speed):
+def create_openfoam_dynamicmesh(case_dir, rotation_speed, center_of_rotation):
     dynamic_mesh_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -831,7 +867,7 @@ cellZone        rotatingZone;
 
 solidBodyMotionFunction  rotatingMotion;
 
-origin      (-3 2 2.6);
+origin      """ + center_of_rotation + """;
 axis        (0 0 1);
 omega       """ + str(rotation_speed) + """;
 
@@ -1280,8 +1316,9 @@ def create_openfoam_case(case_dir, number_of_subdomains):
     rotation_speed = 10 # radians per second
     time_step = 0.0002 # recommended setting is 0.0002
     write_interval = 0.02 # recommended setting is 0.02
+    center_of_rotation = "(-3 2 2.6)"
 
-    create_openfoam_control(case_dir, sim_end_time, time_step, write_interval)
+    create_openfoam_control(case_dir, sim_end_time, time_step, write_interval, center_of_rotation)
     create_openfoam_blockmesh(case_dir)
     create_openfoam_createpatch(case_dir)
     create_openfoam_decomposepar(case_dir, number_of_subdomains)
@@ -1291,7 +1328,7 @@ def create_openfoam_case(case_dir, number_of_subdomains):
     create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level)
     create_openfoam_surfacefeatures(case_dir)
     create_openfoam_transportproperties(case_dir)
-    create_openfoam_dynamicmesh(case_dir, rotation_speed)
+    create_openfoam_dynamicmesh(case_dir, rotation_speed, center_of_rotation)
     create_openfoam_g(case_dir)
     create_openfoam_turbulenceproperties(case_dir)
     
@@ -1304,6 +1341,37 @@ def create_openfoam_initial_conditions(case_dir):
     create_openfoam_initial_condition_k(case_dir)
     create_openfoam_initial_condition_omega(case_dir)
 
+# post processing on forces
+def extract_forces_data(forces_file):
+    forces_df = pd.read_csv(forces_file, sep='\s+', comment='#', header=None)
+
+    # Inspect the first few rows to understand the structure
+    print(forces_df.head())
+
+    # Update the column names based on the structure of your forces.dat file
+    forces_df.columns = ['Time', 'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz', 'Vx', 'Vy', 'Vz']
+
+    # Extract thrust (assuming it's the force in the x-direction)
+    thrust = forces_df['Fx']
+
+    # Define propeller angular velocity (rad/s)
+    angular_velocity = 100.0  # Adjust according to your simulation setup
+
+    # Convert the torque column to numeric, forcing errors to NaN
+    torque = pd.to_numeric(forces_df['Mx'], errors='coerce')
+
+    # Replace NaN values with 0 (or handle them as needed)
+    torque.fillna(0, inplace=True)
+
+    # Calculate power (Power = Torque * Angular Velocity)
+    power = torque * angular_velocity
+
+    # Save results to a CSV file
+    results_df = pd.DataFrame({'Time': forces_df['Time'], 'Thrust': thrust, 'Power': power})
+    results_df.to_csv('thrust_power.csv', index=False)
+
+    print("Thrust and power data saved to thrust_power.csv")
+    return results_df
 
 def main():
     # Set the number processors 
@@ -1320,6 +1388,9 @@ def main():
 
     # Set the case directory inside Docker
     case_dir = "/home/openfoam/case/"  # Directory inside Docker container]
+    forces_file = 'case/postProcessing/forces/0/force.dat'
+
+
     if write_files:
         # clean up files 
         run_command(f"cd {case_dir} && rm -R ./*")
@@ -1377,6 +1448,9 @@ def main():
         # generate VTK files and post process 
         run_command(f'cd {case_dir} && foamToVTK')
     
+    # Extract forces data
+    forces_data = extract_forces_data(forces_file)
+    print(forces_data.head())
 
 if __name__ == "__main__":
     main()

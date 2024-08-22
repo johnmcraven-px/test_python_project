@@ -253,10 +253,10 @@ apply_boolean_cut(room, outlet_cutout)
 fan_center_x = -3
 fan_center_y = 2
 fan_z = 2.4  # Fan hub height before adjustment
-blade_length = 0.6  # 60 cm
+blade_length = 0.7  # 60 cm
 blade_width = 0.15  # 15 cm at the widest point
 blade_height = 0.15  # 15 cm
-blade_thickness = 0.02  # 2 cm
+blade_thickness = 0.03  # 2 cm
 hub_radius = 0.15  # 30 cm diameter
 hub_height = 0.15  # 10 cm height
 twist_angle = 20  # 20 degree twist
