@@ -1275,8 +1275,8 @@ boundaryField
 
 def create_openfoam_case(case_dir, number_of_subdomains):
     sim_end_time = 1 # time in seconds
-    fine_mesh_level = 2 
-    course_mesh_level = 0
+    fine_mesh_level = 3
+    course_mesh_level = 1
     rotation_speed = 10 # radians per second
     time_step = 0.0002 # recommended setting is 0.0002
     write_interval = 0.02 # recommended setting is 0.02
@@ -1312,9 +1312,9 @@ def main():
     write_files = True
     
     build_mesh = True
-    mesh_par = False
+    mesh_par = True
     
-    sim_par = False
+    sim_par = True
     run_sim = True
 
 
@@ -1328,7 +1328,7 @@ def main():
         create_directory_structure_in_container(case_dir)
 
         # move the stl files to the right location
-        stl_files_source = os.path.expanduser("./output/geometry_mix/")  # STL file on the host
+        stl_files_source = os.path.expanduser("./output/geometry_new/")  # STL file on the host
         stl_files_container_location = os.path.join(case_dir, "constant/triSurface/")
 
     

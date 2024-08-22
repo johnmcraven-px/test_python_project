@@ -11,10 +11,24 @@ if "Cube" in bpy.data.objects:
     bpy.ops.object.delete()
 
 # Create the room with the given dimensions and placement
-def create_room(length, width, height, center_x, center_y, bottom_z):
+def create_room(length, width, height, center_x, center_y, bottom_z, wall_thickness):
     bpy.ops.mesh.primitive_cube_add(size=1, location=(center_x, center_y, bottom_z + height/2))
     room_cube = bpy.context.object
     room_cube.scale = (length, width, height)
+
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(center_x, center_y, bottom_z + height/2))
+    room_inner = bpy.context.object
+    room_inner.scale = ((length - 2 * wall_thickness), (width - 2 * wall_thickness), (height - 2 * wall_thickness))
+    
+    mod_bool = room_cube.modifiers.new(type="BOOLEAN", name="Boolean")
+    mod_bool.operation = 'DIFFERENCE'
+    mod_bool.object = room_inner
+    bpy.context.view_layer.objects.active = room_cube
+    bpy.ops.object.modifier_apply(modifier="Boolean")
+    
+    bpy.data.objects.remove(room_inner)
+
+
     room_cube.name = "Room"
     return room_cube
 
@@ -163,19 +177,19 @@ def create_pole(diameter, height, center_x, center_y, bottom_z):
     return pole
 
 # Function to create the door
-def create_door(height, width, x_position, y_position):
+def create_door(height, width, x_position, y_position, thickness):
     z_position = height / 2  # The door's z position should be half its height
     bpy.ops.mesh.primitive_cube_add(size=1, location=(x_position, y_position, z_position))
     door = bpy.context.object
-    door.scale = (0, width, height)  # Thickness is 0 (x scale is 0)
+    door.scale = (thickness, width, height)  # Thickness is 0 (x scale is 0)
     door.name = "Door"
     return door
 
 # Function to create the outlet
-def create_outlet(height, width, x_position, y_position, z_position):
+def create_outlet(height, width, x_position, y_position, z_position, thickness):
     bpy.ops.mesh.primitive_cube_add(size=1, location=(x_position, y_position, z_position))
     outlet = bpy.context.object
-    outlet.scale = (0, width, height)  # Thickness is 0 (x scale is 0)
+    outlet.scale = (thickness, width, height)  # Thickness is 0 (x scale is 0)
     outlet.name = "Outlet"
     return outlet
 
@@ -186,16 +200,54 @@ def create_ami(diameter, height, x_position, y_position, z_position):
     ami.name = "AMI"
     return ami
 
+# Apply a boolean difference to cut out the door and outlet from the room
+def apply_boolean_cut(room_obj, cutout_obj):
+    mod_bool = room_obj.modifiers.new(type="BOOLEAN", name="Boolean")
+    mod_bool.operation = 'DIFFERENCE'
+    mod_bool.object = cutout_obj
+    bpy.context.view_layer.objects.active = room_obj
+    bpy.ops.object.modifier_apply(modifier="Boolean")
+    bpy.data.objects.remove(cutout_obj, do_unlink=True)
+
+
 # Room dimensions and placement
 room_length = 5.86
 room_width = 4.85
 room_height = 2.8
 room_center_x = -2.7
 room_center_y = 2
+wall_thickness = 0.01 # Wall thickness of 1 cm
 bottom_z = 0
 
+# Door dimensions and placement to cut out from the walls
+door_height = 2.1  # 2.1 m
+door_width = 0.768006  # 0.768006 m
+door_x = room_center_x + room_length / 2 - wall_thickness/2 # Positioned on the wall at the right end of the room
+door_y = room_center_y  # Positioned at y = 2
+
+# Outlet dimensions and placement
+outlet_height = 1.05  # 1.05 m
+outlet_width = 0.845193  # 0.845193 m
+outlet_x = room_center_x - room_length / 2 + wall_thickness/2 # Positioned on the wall at the left end of the room
+outlet_y = room_center_y  # Positioned at y = 2
+outlet_z = door_height - outlet_height / 2  # Positioned so the top is at the same height as the door
+
 # Create the room
-room = create_room(room_length, room_width, room_height, room_center_x, room_center_y, bottom_z)
+room = create_room(room_length, room_width, room_height, room_center_x, room_center_y, bottom_z, wall_thickness)
+
+# Create the door as a cube with 0 thickness
+door = create_door(door_height, door_width, door_x, door_y, wall_thickness)
+
+# Apply the boolean cut using the duplicate outlet object
+door_cutout = create_door(door_height, door_width, door_x, door_y, 1.1*wall_thickness)
+apply_boolean_cut(room, door_cutout)
+
+# Create the outlet as a cube with 0 thickness
+outlet = create_outlet(outlet_height, outlet_width, outlet_x, outlet_y, outlet_z, wall_thickness)
+
+# Apply the boolean cut using the duplicate outlet object
+outlet_cutout = create_outlet(outlet_height, outlet_width, outlet_x, outlet_y, outlet_z, 1.1*wall_thickness)
+apply_boolean_cut(room, outlet_cutout)
 
 # Fan dimensions and placement
 fan_center_x = -3
@@ -225,11 +277,11 @@ desk_z = 0.84172  # The top of the desk
 desk = create_desk(desk_top_length, desk_top_width, desk_top_thickness, desk_leg_height, desk_leg_x, desk_leg_y, desk_z, fan_center_x, fan_center_y)
 
 # Pole dimensions and placement
-pole_diameter = 0.03  # 3 cm
-pole_height = room_height - fan_z  # From fan to ceiling
+fan_pole_diameter = 0.03  # 3 cm
+fan_pole_height = room_height - fan_z  # From fan to ceiling
 
 # Create the pole
-pole = create_pole(pole_diameter, pole_height, fan_center_x, fan_center_y, fan_z)
+pole = create_pole(fan_pole_diameter, fan_pole_height, fan_center_x, fan_center_y, fan_z)
 
 # Join the pole, hub, and blades into a single object called "Fan"
 bpy.ops.object.select_all(action='DESELECT')
@@ -239,29 +291,10 @@ bpy.context.view_layer.objects.active = fan_hub
 bpy.ops.object.join()
 fan_hub.name = "Fan"
 
-# Door dimensions and placement
-door_height = 2.1  # 2.1 m
-door_width = 0.768006  # 0.768006 m
-door_x = -room_center_x + room_length / 2  # Positioned on the wall at the right end of the room
-door_y = room_center_y  # Positioned at y = 2
-
-# Create the door as a cube with 0 thickness
-door = create_door(door_height, door_width, door_x, door_y)
-
-# Outlet dimensions and placement
-outlet_height = 1.05  # 1.05 m
-outlet_width = 0.845193  # 0.845193 m
-outlet_x = -room_center_x - room_length / 2  # Positioned on the wall at the left end of the room
-outlet_y = room_center_y  # Positioned at y = 2
-outlet_z = door_height - outlet_height / 2  # Positioned so the top is at the same height as the door
-
-# Create the outlet as a cube with 0 thickness
-outlet = create_outlet(outlet_height, outlet_width, outlet_x, outlet_y, outlet_z)
-
 # AMI dimensions and placement
 ami_diameter = 1.3 * 2 * blade_length  # Diameter is 1.3 times twice the blade length
 ami_height = 0.64  # 0.64 m height
-ami_x = -fan_center_x  # x position is -3
+ami_x = fan_center_x  # x position is -3
 ami_y = fan_center_y  # y position is 2
 ami_z = room_height - ami_height / 2 + 0.01  # z position is room height minus half the AMI height plus 1 cm
 
