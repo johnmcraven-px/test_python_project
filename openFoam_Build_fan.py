@@ -129,7 +129,7 @@ functions
 
         rhoInf          1.25;                // Name of the density field (used for compressible flows)
         log             true;                  // Log the results
-        liftDir         (0 0 1);               // Direction for lift coefficient calculation
+        liftDir         (0 0 -1);               // Direction for lift coefficient calculation
         dragDir         (0 1 0);               // Direction for drag coefficient calculation
         pitchAxis       (0 0 1);               // Axis about which the moment is calculated
         magUInf         1;                     // Freestream velocity magnitude
