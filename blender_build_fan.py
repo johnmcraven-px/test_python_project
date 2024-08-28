@@ -12,7 +12,9 @@ import cad_functions as cadfn
 importlib.reload(cadfn)
 
 # Set the output path
-output_path = './output/geometry_new'
+output_path = '../data/output'
+os.makedirs(output_path, exist_ok=True)
+
 output_file = 'output.blend'
 output_file_path = output_path + '/' + output_file
 
