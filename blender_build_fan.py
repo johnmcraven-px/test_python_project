@@ -7,14 +7,9 @@ import importlib
 
 # Add the directory containing cad_functions.py to sys.path
 script_dir = os.path.dirname(os.path.abspath("cad_functions.py"))
-# print(script_dir)
 sys.path.append(script_dir)
-
-# print("Python Path:", sys.path)
-
 import cad_functions as cadfn
 importlib.reload(cadfn)
-# print("Module Imported:", cadfn)
 
 # Set the output path
 output_path = './output/geometry_new'
@@ -22,10 +17,7 @@ output_file = 'output.blend'
 output_file_path = output_path + '/' + output_file
 
 if os.path.exists(output_file_path):
-    print(f"{output_file_path} exists, deleting it now.")
     os.remove(output_file_path)
-else:
-    print(f"{output_file_path} does not exist.")
 
 # Delete the default cube if it exists
 if "Cube" in bpy.data.objects:
@@ -75,28 +67,17 @@ cadfn.apply_boolean_cut(room, outlet_cutout)
 fan_center_x = -3
 fan_center_y = 2
 fan_z = 2.4  # Fan hub height before adjustment
-blade_length = 0.7  # 60 cm
+blade_length = 0.7  # 70 cm
 blade_width = 0.15  # 15 cm at the widest point
 blade_height = 0.15  # 15 cm
-blade_thickness = 0.03  # 2 cm
+blade_thickness = 0.035  # 3.5 cm
 hub_radius = 0.15  # 30 cm diameter
 hub_height = 0.15  # 10 cm height
 twist_angle = 20  # 20 degree twist
+number_of_blades = 4 # 4 blades in fan
 
 # Create the fan (hub and blades)
-fan_hub = cadfn.create_fan(4, blade_length, blade_width, blade_height, blade_thickness, hub_radius, hub_height, twist_angle, fan_center_x, fan_center_y, fan_z)
-
-# Desk dimensions and placement
-desk_top_length = 2.34896
-desk_top_width = 1.2
-desk_top_thickness = 0.1
-desk_leg_height = 0.86672
-desk_leg_x = 0.15  # 15 cm
-desk_leg_y = 0.05  # 5 cm
-desk_z = 0.84172  # The top of the desk
-
-# Create the desk as a single object
-desk = cadfn.create_desk(desk_top_length, desk_top_width, desk_top_thickness, desk_leg_height, desk_leg_x, desk_leg_y, desk_z, fan_center_x, fan_center_y)
+fan_hub = cadfn.create_fan(number_of_blades, blade_length, blade_width, blade_height, blade_thickness, hub_radius, hub_height, twist_angle, fan_center_x, fan_center_y, fan_z)
 
 # Pole dimensions and placement
 fan_pole_diameter = 0.03  # 3 cm
@@ -122,6 +103,18 @@ ami_z = room_height - ami_height / 2 + 0.01  # z position is room height minus h
 
 # Create the AMI cylinder
 ami = cadfn.create_ami(ami_diameter, ami_height, ami_x, ami_y, ami_z)
+
+# Desk dimensions and placement
+desk_top_length = 2.34896
+desk_top_width = 1.2
+desk_top_thickness = 0.1
+desk_leg_height = 0.86672
+desk_leg_x = 0.15  # 15 cm
+desk_leg_y = 0.05  # 5 cm
+desk_z = 0.84172  # The top of the desk
+
+# Create the desk as a single object
+desk = cadfn.create_desk(desk_top_length, desk_top_width, desk_top_thickness, desk_leg_height, desk_leg_x, desk_leg_y, desk_z, fan_center_x, fan_center_y)
 
 # Save the Blender file
 bpy.ops.wm.save_as_mainfile(filepath=output_file_path)

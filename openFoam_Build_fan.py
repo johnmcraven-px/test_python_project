@@ -46,7 +46,17 @@ def main():
 
 
         # Setup the OpenFOAM case
-        of.create_openfoam_case(case_dir, number_of_subdomains=num_processors, docker_container_name=DOCKER_CONTAINER_NAME)
+        sim_end_time = 1 # time in seconds
+        fine_mesh_level = 3
+        course_mesh_level = 1
+        rotation_speed = 10 # radians per second
+        time_step = 0.0002 # recommended setting is 0.0002
+        write_interval = 0.02 # recommended setting is 0.02
+        center_of_rotation = "(-3 2 2.6)"
+        of.create_openfoam_case(case_dir, number_of_subdomains=num_processors, docker_container_name=DOCKER_CONTAINER_NAME, 
+                                sim_end_time=sim_end_time, fine_mesh_level=fine_mesh_level, course_mesh_level=course_mesh_level, 
+                                rotation_speed= rotation_speed, time_step=time_step, write_interval=write_interval, 
+                                center_of_rotation=center_of_rotation)
 
     if build_mesh:
         # set up the openfoam simualtion
