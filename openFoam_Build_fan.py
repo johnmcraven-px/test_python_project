@@ -49,7 +49,7 @@ def main():
         sim_end_time = 1 # time in seconds
         fine_mesh_level = 3
         course_mesh_level = 1
-        rotation_speed = 10 # radians per second
+        rotation_speed = 10 # radians per second XXX 10 - 40 by 10
         time_step = 0.0002 # recommended setting is 0.0002
         write_interval = 0.02 # recommended setting is 0.02
         center_of_rotation = "(-3 2 2.6)"

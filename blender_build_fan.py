@@ -65,18 +65,27 @@ outlet = cadfn.create_outlet(outlet_height, outlet_width, outlet_x, outlet_y, ou
 outlet_cutout = cadfn.create_outlet(outlet_height, outlet_width, outlet_x, outlet_y, outlet_z, 1.1*wall_thickness)
 cadfn.apply_boolean_cut(room, outlet_cutout)
 
+
+args = sys.argv
+args = args[args.index("--") + 1:]  # Only take arguments after "--"
+
+if len(args) != 2:
+    print("args", len(sys.argv), sys.argv, len(args), args)
+    print("Usage: python blender_generate.py blade_length num_blades")
+    sys.exit(1)
+
 # Fan dimensions and placement
 fan_center_x = -3
 fan_center_y = 2
 fan_z = 2.4  # Fan hub height before adjustment
-blade_length = 0.7  # 70 cm
+blade_length = float(args[0])  # 70 cm. Parameterize 30-80cm every 10cm
 blade_width = 0.15  # 15 cm at the widest point
 blade_height = 0.15  # 15 cm
 blade_thickness = 0.035  # 3.5 cm
 hub_radius = 0.15  # 30 cm diameter
 hub_height = 0.15  # 10 cm height
 twist_angle = 20  # 20 degree twist
-number_of_blades = 4 # 4 blades in fan
+number_of_blades = int(args[1]) # 4 blades in fan. Parameterize 2-6
 
 # Create the fan (hub and blades)
 fan_hub = cadfn.create_fan(number_of_blades, blade_length, blade_width, blade_height, blade_thickness, hub_radius, hub_height, twist_angle, fan_center_x, fan_center_y, fan_z)
