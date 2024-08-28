@@ -18,13 +18,14 @@ importlib.reload(cadfn)
 
 # Set the output path
 output_path = './output/geometry_new'
-output_file = output_path + '/output.blend'
+output_file = 'output.blend'
+output_file_path = output_path + '/' + output_file
 
-if os.path.exists(output_file):
-    print(f"{output_file} exists, deleting it now.")
-    os.remove(output_file)
+if os.path.exists(output_file_path):
+    print(f"{output_file_path} exists, deleting it now.")
+    os.remove(output_file_path)
 else:
-    print(f"{output_file} does not exist.")
+    print(f"{output_file_path} does not exist.")
 
 # Delete the default cube if it exists
 if "Cube" in bpy.data.objects:
@@ -123,7 +124,7 @@ ami_z = room_height - ami_height / 2 + 0.01  # z position is room height minus h
 ami = cadfn.create_ami(ami_diameter, ami_height, ami_x, ami_y, ami_z)
 
 # Save the Blender file
-bpy.ops.wm.save_as_mainfile(filepath=f'{output_path}/output.blend')
+bpy.ops.wm.save_as_mainfile(filepath=output_file_path)
 
 cadfn.export_stl('Room', f'{output_path}/room.stl')
 cadfn.export_stl('Desk_Top', f'{output_path}/desk.stl')
