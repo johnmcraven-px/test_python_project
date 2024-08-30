@@ -2,11 +2,11 @@ import subprocess
 import os
 import pandas as pd
 
-def run_command(command, docker_container_name, check_output=True):
+def run_command(command, check_output=True):
     """Run a shell command and log its output."""
     source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
-    docker_command = f"docker exec -it {docker_container_name} bash -c '{source_openfoam} && {command}'"
-    result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
+    full_command = f"bash -c '{source_openfoam} && {command}'"
+    result = subprocess.run(full_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
@@ -15,17 +15,17 @@ def run_command(command, docker_container_name, check_output=True):
         result.check_returncode()
     return result
 
-def copy_file_to_container(local_path, container_path, docker_container_name):
-    """Copy a file from the host to the Docker container."""
-    docker_copy_command = f"docker cp '{local_path}' '{docker_container_name}:{container_path}'"
-    result = subprocess.run(docker_copy_command, shell=True, capture_output=True, text=True)
-    print(f"Copy Command: {docker_copy_command}")
+def copy_file(local_path, container_path):
+    """Copy a file."""
+    copy_command = f"cp '{local_path}' '{container_path}'"
+    result = subprocess.run(copy_command, shell=True, capture_output=True, text=True)
+    print(f"Copy Command: {copy_command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
         print(f"STDERR:\n{result.stderr}")
     result.check_returncode()
 
-def create_directory_structure_in_container(case_dir, docker_container_name):
+def create_directory_structure_in_container(case_dir):
     dirs = [
         case_dir,
         os.path.join(case_dir, 'constant'),
@@ -34,13 +34,13 @@ def create_directory_structure_in_container(case_dir, docker_container_name):
         os.path.join(case_dir, '0')
     ]
     for d in dirs:
-        run_command(f"mkdir -p {d}", docker_container_name)
+        run_command(f"mkdir -p {d}")
 
 def write_file(filepath, content):
     with open(filepath, 'w') as f:
         f.write(content)
 
-def create_openfoam_control(case_dir, sim_end_time, time_step, write_interval, center_of_rotation, docker_container_name):
+def create_openfoam_control(case_dir, sim_end_time, time_step, write_interval, center_of_rotation):
     control_dict_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -140,10 +140,10 @@ functions
 """
 
     write_file("controlDict", control_dict_content)
-    copy_file_to_container("controlDict", os.path.join(case_dir, 'system/controlDict'), docker_container_name)
+    copy_file("controlDict", os.path.join(case_dir, 'system/controlDict'))
     os.remove("controlDict")
 
-def create_openfoam_blockmesh(case_dir, docker_container_name):
+def create_openfoam_blockmesh(case_dir):
     block_mesh_dict_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -207,10 +207,10 @@ boundary
 """
 
     write_file("blockMeshDict", block_mesh_dict_content)
-    copy_file_to_container("blockMeshDict", os.path.join(case_dir, 'system/blockMeshDict'), docker_container_name)
+    copy_file("blockMeshDict", os.path.join(case_dir, 'system/blockMeshDict'))
     os.remove("blockMeshDict")
 
-def create_openfoam_createpatch(case_dir, docker_container_name):
+def create_openfoam_createpatch(case_dir):
     create_patch_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -266,10 +266,10 @@ patches
 """
     # Write the createPatchDict content to a file
     write_file("createPatchDict", create_patch_content)
-    copy_file_to_container("createPatchDict", os.path.join(case_dir, 'system/createPatchDict'), docker_container_name)
+    copy_file("createPatchDict", os.path.join(case_dir, 'system/createPatchDict'))
     os.remove("createPatchDict")
 
-def create_openfoam_decomposepar(case_dir, number_of_subdomains, docker_container_name):
+def create_openfoam_decomposepar(case_dir, number_of_subdomains):
     decompose_par_dict_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -303,10 +303,10 @@ hierarchicalCoeffs
 
 """
     write_file("decomposeParDict", decompose_par_dict_content)
-    copy_file_to_container("decomposeParDict", os.path.join(case_dir, 'system/decomposeParDict'), docker_container_name)
+    copy_file("decomposeParDict", os.path.join(case_dir, 'system/decomposeParDict'))
     os.remove("decomposeParDict")
 
-def create_openfoam_fvschemes(case_dir, docker_container_name):
+def create_openfoam_fvschemes(case_dir):
     fv_schemes_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -371,10 +371,10 @@ wallDist
 // ************************************************************************* //
 """
     write_file("fvSchemes", fv_schemes_content)
-    copy_file_to_container("fvSchemes", os.path.join(case_dir, 'system/fvSchemes'), docker_container_name)
+    copy_file("fvSchemes", os.path.join(case_dir, 'system/fvSchemes'))
     os.remove("fvSchemes")
 
-def create_openfoam_fvsolution(case_dir, docker_container_name):
+def create_openfoam_fvsolution(case_dir):
     fv_solution_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -437,10 +437,10 @@ PIMPLE
 // ************************************************************************* //
 """
     write_file("fvSolution", fv_solution_content)
-    copy_file_to_container("fvSolution", os.path.join(case_dir, 'system/fvSolution'), docker_container_name)
+    copy_file("fvSolution", os.path.join(case_dir, 'system/fvSolution'))
     os.remove("fvSolution")
 
-def create_openfoam_relvelocity(case_dir, docker_container_name):
+def create_openfoam_relvelocity(case_dir):
     rel_velocity_content = """
 // --------------------------------*- C++ -*-------------------------------- //
 //
@@ -564,10 +564,10 @@ relVelocity
 // ************************************************************************* //
 """
     write_file("relVelocity", rel_velocity_content)
-    copy_file_to_container("relVelocity", os.path.join(case_dir, 'system/relVelocity'), docker_container_name)
+    copy_file("relVelocity", os.path.join(case_dir, 'system/relVelocity'))
     os.remove("relVelocity") 
 
-def create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level, docker_container_name):
+def create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level):
     snappy_hex_mesh_dict_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -740,10 +740,10 @@ mergeTolerance 1e-6;
 // ************************************************************************* //
 """
     write_file("snappyHexMeshDict", snappy_hex_mesh_dict_content)
-    copy_file_to_container("snappyHexMeshDict", os.path.join(case_dir, 'system/snappyHexMeshDict'), docker_container_name)
+    copy_file("snappyHexMeshDict", os.path.join(case_dir, 'system/snappyHexMeshDict'))
     os.remove("snappyHexMeshDict")
 
-def create_openfoam_surfacefeatures(case_dir, docker_container_name):
+def create_openfoam_surfacefeatures(case_dir):
     surface_features_dict_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -801,10 +801,10 @@ desk.stl
 // ************************************************************************* //
 """
     write_file("surfaceFeatureExtractDict", surface_features_dict_content)
-    copy_file_to_container("surfaceFeatureExtractDict", os.path.join(case_dir, 'system/surfaceFeatureExtractDict'), docker_container_name)
+    copy_file("surfaceFeatureExtractDict", os.path.join(case_dir, 'system/surfaceFeatureExtractDict'))
     os.remove("surfaceFeatureExtractDict")
 
-def create_openfoam_transportproperties(case_dir, docker_container_name):
+def create_openfoam_transportproperties(case_dir):
     transport_properties_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -831,10 +831,10 @@ nu              1e-05;
 
 """
     write_file("transportProperties", transport_properties_content)
-    copy_file_to_container("transportProperties", os.path.join(case_dir, 'constant/transportProperties'), docker_container_name)
+    copy_file("transportProperties", os.path.join(case_dir, 'constant/transportProperties'))
     os.remove("transportProperties")
 
-def create_openfoam_dynamicmesh(case_dir, rotation_speed, center_of_rotation, docker_container_name):
+def create_openfoam_dynamicmesh(case_dir, rotation_speed, center_of_rotation):
     dynamic_mesh_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -870,10 +870,10 @@ omega       """ + str(rotation_speed) + """;
 // ************************************************************************* //
 """
     write_file("dynamicMeshDict", dynamic_mesh_content)
-    copy_file_to_container("dynamicMeshDict", os.path.join(case_dir, 'constant/dynamicMeshDict'), docker_container_name)
+    copy_file("dynamicMeshDict", os.path.join(case_dir, 'constant/dynamicMeshDict'))
     os.remove("dynamicMeshDict") 
 
-def create_openfoam_g(case_dir, docker_container_name):
+def create_openfoam_g(case_dir):
     g_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -898,10 +898,10 @@ value           (0 0 -9.81);
 // ************************************************************************* //
 """
     write_file("g", g_content)
-    copy_file_to_container("g", os.path.join(case_dir, 'constant/g'), docker_container_name)
+    copy_file("g", os.path.join(case_dir, 'constant/g'))
     os.remove("g") 
 
-def create_openfoam_turbulenceproperties(case_dir, docker_container_name):
+def create_openfoam_turbulenceproperties(case_dir):
     turbulence_properties_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -935,10 +935,10 @@ RAS
 
 """
     write_file("turbulenceProperties", turbulence_properties_content)
-    copy_file_to_container("turbulenceProperties", os.path.join(case_dir, 'constant/turbulenceProperties'), docker_container_name)
+    copy_file("turbulenceProperties", os.path.join(case_dir, 'constant/turbulenceProperties'))
     os.remove("turbulenceProperties")
 
-def create_openfoam_initial_condition_u(case_dir, docker_container_name):
+def create_openfoam_initial_condition_u(case_dir):
     u_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -1007,10 +1007,10 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("U", u_content)
-    copy_file_to_container("U", os.path.join(case_dir, '0/U'), docker_container_name)
+    copy_file("U", os.path.join(case_dir, '0/U'))
     os.remove("U")
 
-def create_openfoam_initial_condition_p(case_dir, docker_container_name):
+def create_openfoam_initial_condition_p(case_dir):
     p_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -1081,10 +1081,10 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("p", p_content)
-    copy_file_to_container("p", os.path.join(case_dir, '0/p'), docker_container_name)
+    copy_file("p", os.path.join(case_dir, '0/p'))
     os.remove("p")
 
-def create_openfoam_initial_condition_nut(case_dir, docker_container_name):
+def create_openfoam_initial_condition_nut(case_dir):
     nut_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -1153,10 +1153,10 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("nut", nut_content)
-    copy_file_to_container("nut", os.path.join(case_dir, '0/nut'), docker_container_name)
+    copy_file("nut", os.path.join(case_dir, '0/nut'))
     os.remove("nut")
 
-def create_openfoam_initial_condition_k(case_dir, docker_container_name):
+def create_openfoam_initial_condition_k(case_dir):
     k_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -1227,10 +1227,10 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("k", k_content)
-    copy_file_to_container("k", os.path.join(case_dir, '0/k'), docker_container_name)
+    copy_file("k", os.path.join(case_dir, '0/k'))
     os.remove("k")
 
-def create_openfoam_initial_condition_omega(case_dir, docker_container_name):
+def create_openfoam_initial_condition_omega(case_dir):
     omega_content = """
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
@@ -1301,33 +1301,33 @@ boundaryField
 // ************************************************************************* //
 """
     write_file("omega", omega_content)
-    copy_file_to_container("omega", os.path.join(case_dir, '0/omega'), docker_container_name)
+    copy_file("omega", os.path.join(case_dir, '0/omega'))
     os.remove("omega")
 
-def create_openfoam_case(case_dir, number_of_subdomains, docker_container_name, sim_end_time, fine_mesh_level, course_mesh_level, rotation_speed, time_step, write_interval, center_of_rotation):
+def create_openfoam_case(case_dir, number_of_subdomains, sim_end_time, fine_mesh_level, course_mesh_level, rotation_speed, time_step, write_interval, center_of_rotation):
 
-    create_openfoam_control(case_dir, sim_end_time, time_step, write_interval, center_of_rotation, docker_container_name)
-    create_openfoam_blockmesh(case_dir, docker_container_name)
-    create_openfoam_createpatch(case_dir, docker_container_name)
-    create_openfoam_decomposepar(case_dir, number_of_subdomains, docker_container_name)
-    create_openfoam_fvschemes(case_dir, docker_container_name)
-    create_openfoam_fvsolution(case_dir, docker_container_name)
-    create_openfoam_relvelocity(case_dir, docker_container_name)
-    create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level, docker_container_name)
-    create_openfoam_surfacefeatures(case_dir, docker_container_name)
-    create_openfoam_transportproperties(case_dir, docker_container_name)
-    create_openfoam_dynamicmesh(case_dir, rotation_speed, center_of_rotation, docker_container_name)
-    create_openfoam_g(case_dir, docker_container_name)
-    create_openfoam_turbulenceproperties(case_dir, docker_container_name)
+    create_openfoam_control(case_dir, sim_end_time, time_step, write_interval, center_of_rotation)
+    create_openfoam_blockmesh(case_dir)
+    create_openfoam_createpatch(case_dir)
+    create_openfoam_decomposepar(case_dir, number_of_subdomains)
+    create_openfoam_fvschemes(case_dir)
+    create_openfoam_fvsolution(case_dir)
+    create_openfoam_relvelocity(case_dir)
+    create_openfoam_snappyhexmesh(case_dir, fine_mesh_level, course_mesh_level)
+    create_openfoam_surfacefeatures(case_dir)
+    create_openfoam_transportproperties(case_dir)
+    create_openfoam_dynamicmesh(case_dir, rotation_speed, center_of_rotation)
+    create_openfoam_g(case_dir)
+    create_openfoam_turbulenceproperties(case_dir)
     
 
-def create_openfoam_initial_conditions(case_dir, docker_container_name):
-    run_command(f"cd {case_dir} && mkdir 0", docker_container_name)
-    create_openfoam_initial_condition_u(case_dir, docker_container_name)
-    create_openfoam_initial_condition_p(case_dir, docker_container_name)
-    create_openfoam_initial_condition_nut(case_dir, docker_container_name)
-    create_openfoam_initial_condition_k(case_dir, docker_container_name)
-    create_openfoam_initial_condition_omega(case_dir, docker_container_name)
+def create_openfoam_initial_conditions(case_dir):
+    run_command(f"cd {case_dir} && mkdir 0")
+    create_openfoam_initial_condition_u(case_dir)
+    create_openfoam_initial_condition_p(case_dir)
+    create_openfoam_initial_condition_nut(case_dir)
+    create_openfoam_initial_condition_k(case_dir)
+    create_openfoam_initial_condition_omega(case_dir)
 
 # post processing on forces
 def extract_forces_data(forces_file):
