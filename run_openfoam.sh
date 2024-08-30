@@ -14,13 +14,15 @@ apt-get update && apt-get install -y \
     && apt-get clean
 
 # Create necessary directories and set ownership to openfoam user
-mkdir -p /opt/OpenFOAM && chown -R openfoam:openfoam /opt/OpenFOAM
+mkdir -p /opt/OpenFOAM
 
 # Install necessary dependencies and extract OpenFOAM
 apt-get update && apt-get install -y wget ca-certificates && apt-get clean
 wget -O /tmp/OpenFOAM-v2406.tgz https://dl.openfoam.com/source/v2406/OpenFOAM-v2406.tgz
 tar -xzf /tmp/OpenFOAM-v2406.tgz -C /opt/OpenFOAM
 rm /tmp/OpenFOAM-v2406.tgz
+
+chown -R openfoam:openfoam /opt/OpenFOAM
 
 apt-get update && apt-get install -y python3-pip
 
