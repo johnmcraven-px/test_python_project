@@ -1,5 +1,5 @@
 # Switch to root user
-su -
+su - <<EOF
 
 # Add a non-root user called openfoam
 useradd -ms /bin/bash openfoam
@@ -26,9 +26,10 @@ apt-get update && apt-get install -y python3-pip
 
 # Set environment variables for OpenFOAM
 echo "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc" >> /home/openfoam/.bashrc
+EOF
 
 # Switch to a non-root user if necessary
-su - openfoam
+su - openfoam <<EOF
 
 # Compile OpenFOAM with detailed output
 source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc
@@ -60,3 +61,4 @@ python3 openFoam_Build_fan.py "$@";
 mv case/* /data/case/
 echo "Contents of /data/case:"
 ls /data/case
+EOF
