@@ -4,8 +4,8 @@ import pandas as pd
 
 def run_command(command, check_output=True):
     """Run a shell command and log its output."""
-    # source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
-    source_openfoam = "source /opt/openfoam-dev/etc/bashrc"
+    source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
+    # source_openfoam = "source /opt/openfoam-dev/etc/bashrc"
     full_command = f"bash -c '{source_openfoam} && {command}'"
     result = subprocess.run(full_command, shell=True, capture_output=True, text=True)
     print(f"Command: {command}")
