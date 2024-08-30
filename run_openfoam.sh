@@ -1,5 +1,5 @@
 # Switch to root user
-sudo su -
+su -
 
 # Add a non-root user called openfoam
 useradd -ms /bin/bash openfoam
