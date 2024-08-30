@@ -22,10 +22,10 @@ rm /tmp/OpenFOAM-v2406.tgz
 apt-get update && apt-get install -y python3-pip
 
 # Set environment variables for OpenFOAM
-echo "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc" >> ~/.bashrc
+cat /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc >> /home/openfoam/.bashrc
 
 # Compile OpenFOAM with detailed output
-source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc
+. /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc
 cd /opt/OpenFOAM/OpenFOAM-v2406
 ./Allwmake -j $(nproc) 2>&1 | tee /opt/OpenFOAM/build.log
 
@@ -46,14 +46,15 @@ su - openfoam
 cd /home/openfoam
 
 cd /git
+cp -r /data/output output
 cp -r . output /home/openfoam/case
 # whoami
 pip install pandas
 mkdir /data/case
 
 echo "TEST0"
-python3 openfoam_test.py "$@";
+python3 openFoam_Build_fan.py "$@";
 
-mv case/* ../data/case/
+mv case/* /data/case/
 echo "Contents of /data/case:"
 ls /data/case
