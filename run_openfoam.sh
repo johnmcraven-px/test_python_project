@@ -4,6 +4,9 @@ su -
 # Add a non-root user called openfoam
 useradd -ms /bin/bash openfoam
 
+chown -R openfoam /data/
+chown -R openfoam /git/
+
 # Install necessary dependencies
 apt-get update && apt-get install -y \
     gcc g++ make cmake wget ca-certificates \
@@ -22,7 +25,10 @@ rm /tmp/OpenFOAM-v2406.tgz
 apt-get update && apt-get install -y python3-pip
 
 # Set environment variables for OpenFOAM
-cat /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc >> /home/openfoam/.bashrc
+echo ". /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc" >> /home/openfoam/.bashrc
+
+# Switch to a non-root user if necessary
+su - openfoam
 
 # Compile OpenFOAM with detailed output
 . /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc
@@ -35,12 +41,6 @@ if [ -d /opt/OpenFOAM/OpenFOAM-v2406/platforms/linuxARM64GccDPInt32Opt/bin ]; th
 else
     echo 'Build failed, see /opt/OpenFOAM/build.log for details'
 fi
-
-chown -R openfoam /data/
-chown -R openfoam /git/
-
-# Switch to a non-root user if necessary
-su - openfoam
 
 # Set the working directory
 cd /home/openfoam
