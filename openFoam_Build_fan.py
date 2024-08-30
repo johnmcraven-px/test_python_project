@@ -29,7 +29,7 @@ def main():
         of.create_directory_structure_in_container(case_dir)
 
         # move the stl files to the right location
-        stl_files_source = os.path.expanduser("./output/geometry_new/")  # STL file on the host
+        stl_files_source = os.path.expanduser("./output/")  # STL file on the host
         stl_files_container_location = os.path.join(case_dir, "constant/triSurface/")
 
     
