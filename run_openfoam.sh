@@ -25,15 +25,17 @@ rm /tmp/OpenFOAM-v2406.tgz
 apt-get update && apt-get install -y python3-pip
 
 # Set environment variables for OpenFOAM
-echo ". /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc" >> /home/openfoam/.bashrc
+echo "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc" >> /home/openfoam/.bashrc
 
 # Switch to a non-root user if necessary
 su - openfoam
 
 # Compile OpenFOAM with detailed output
-. /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc
+source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc
 cd /opt/OpenFOAM/OpenFOAM-v2406
 ./Allwmake -j $(nproc) 2>&1 | tee /opt/OpenFOAM/build.log
+
+cat /opt/OpenFOAM/build.log
 
 # Verify the installation by listing the binaries, if they exist
 if [ -d /opt/OpenFOAM/OpenFOAM-v2406/platforms/linuxARM64GccDPInt32Opt/bin ]; then
