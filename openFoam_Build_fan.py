@@ -23,7 +23,7 @@ def main():
 
     if write_files:
         # clean up files 
-        of.run_command(f"cd {case_dir} && rm -R ./*")
+        # of.run_command(f"cd {case_dir} && rm -R ./*")
 
         # create directory structure
         of.create_directory_structure_in_container(case_dir)
