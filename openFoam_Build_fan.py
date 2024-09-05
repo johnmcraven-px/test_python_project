@@ -5,7 +5,7 @@ import openfoam_functions as of
 
 def main():
     # Set the number processors 
-    num_processors = 4
+    num_processors = 1
     
     write_files = True
     
