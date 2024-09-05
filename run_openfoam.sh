@@ -19,8 +19,18 @@ mkdir /data/case
 pip install pandas
 
 echo "TEST0"
+pwd
+ls -l
+
+echo "TEST1"
+ls -l case
+
+echo "TEST2"
+whoami
+
 python3 openFoam_Build_fan.py "$@";
 
+echo "TEST3"
 mv case/* /data/case/
 echo "Contents of /data/case:"
 ls /data/case
