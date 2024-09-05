@@ -2,6 +2,7 @@
 su - <<EOF
 chown -R openfoam:openfoam /data/
 chown -R openfoam:openfoam /git/
+chown -R openfoam:openfoam /home/openfoam
 
 apt-get update && apt-get install -y python3-pip
 EOF
