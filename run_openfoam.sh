@@ -1,7 +1,7 @@
 # Switch to root user
 su - <<EOF
-chown -R openfoam /data/
-chown -R openfoam /git/
+chown -R openfoam:openfoam /data/
+chown -R openfoam:openfoam /git/
 
 apt-get update && apt-get install -y python3-pip
 EOF
