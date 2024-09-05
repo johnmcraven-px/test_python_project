@@ -12,7 +12,7 @@ def main():
     build_mesh = True
     mesh_par = True
     
-    sim_par = True
+    sim_par = False
     run_sim = True
 
 
