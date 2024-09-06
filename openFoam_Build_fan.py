@@ -29,7 +29,7 @@ def main():
 
             # create directory structure
             of.create_directory_structure_in_container(case_dir)
-            of.run_command(f'cd {case_dir} && wmake libso dynamicCode')
+            of.run_command(f'cd {case_dir} && mkdir dynamicCode && wmake libso dynamicCode')
 
             # move the stl files to the right location
             stl_files_source = os.path.expanduser("./output/")  # STL file on the host
