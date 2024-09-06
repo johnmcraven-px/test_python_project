@@ -93,7 +93,7 @@ def main():
         # Extract forces data
         forces_data = of.extract_forces_data(forces_file)
         print(forces_data.head())
-    except Exception as e:
+    except BaseException as e:
         error_message = traceback.format_exc()
         print(f"An error occurred:\n{error_message}")
 
