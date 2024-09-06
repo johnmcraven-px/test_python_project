@@ -2,6 +2,7 @@ import subprocess
 import os
 import pandas as pd
 import openfoam_functions as of
+import traceback
 
 def main():
     # Set the number processors 
