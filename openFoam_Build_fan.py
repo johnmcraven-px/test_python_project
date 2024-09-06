@@ -93,9 +93,15 @@ def main():
         # Extract forces data
         forces_data = of.extract_forces_data(forces_file)
         print(forces_data.head())
+    except subprocess.CalledProcessError as e:
+        error_message = traceback.format_exc()
+        print(f"An error occurred1:\n{error_message}")
+    except OSError as e:
+        error_message = traceback.format_exc()
+        print(f"An error occurred2:\n{error_message}")
     except BaseException as e:
         error_message = traceback.format_exc()
-        print(f"An error occurred:\n{error_message}")
+        print(f"An error occurred3:\n{error_message}")
 
 
 if __name__ == "__main__":
