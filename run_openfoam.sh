@@ -29,7 +29,7 @@ ls -l case
 echo "TEST2"
 whoami
 
-python3 openFoam_Build_fan.py "$@";
+python3 openFoam_Build_fan.py "$@" || true;
 
 echo "TEST3"
 ls
