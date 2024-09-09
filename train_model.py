@@ -63,19 +63,21 @@ def generate_training_csv(num_files, output_file):
 def main():
     # Directory to search for files
     directory = '../data'
-    pattern = r'simulated_\d+\.\d+_\d+_\d+\.\d+\.vtk'
+    pattern = r'simulated_.+\.vtk'
     
     # Step 1: Find all matching files
     vtk_files = find_files(directory, pattern)
     num_files = len(vtk_files)
     print(f"Found {num_files} files.")
+
+    os.makedirs("../data/model_output", exist_ok=True)
     
     # Step 2: Generate a dummy model JSON
-    model_output_file = 'dummy_model.json'
+    model_output_file = '../data/model_output/model.json'
     generate_model_json(num_files, model_output_file)
     
     # Step 3: Generate training data CSV(s)
-    training_csv_file = 'training_data.csv'
+    training_csv_file = '../data/model_output/training_data.csv'
     generate_training_csv(num_files, training_csv_file)
 
 if __name__ == "__main__":
