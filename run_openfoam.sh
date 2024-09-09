@@ -1,14 +1,11 @@
 # Switch to root user
-su - <<EOF
-chown -R openfoam:openfoam /data/
-chown -R openfoam:openfoam /git/
-chown -R openfoam:openfoam /home/openfoam
-
-apt-get update && apt-get install -y python3-pip
-EOF
+# su - <<EOF
+# chown -R openfoam:openfoam /data/
+# chown -R openfoam:openfoam /git/
+# EOF
 
 # Switch to a non-root user if necessary
-su - openfoam <<EOF
+# su - openfoam <<EOF
 # Set the working directory
 cd /home/openfoam
 mkdir case
@@ -41,7 +38,7 @@ echo "TEST3C"
 ls case/dynamicCode/platforms
 echo "TEST3D"
 
-mv case/* /data/case/
-echo "Contents of /data/case:"
-ls /data/case
-EOF
+# mv case/* /data/case/
+# echo "Contents of /data/case:"
+# ls /data/case
+# EOF

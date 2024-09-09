@@ -31,17 +31,17 @@ RUN /bin/bash -c "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc && cd /opt/Open
 # Verify the installation by listing the binaries, if they exist
 RUN /bin/bash -c "if [ -d /opt/OpenFOAM/OpenFOAM-v2406/platforms/linuxARM64GccDPInt32Opt/bin ]; then ls /opt/OpenFOAM/OpenFOAM-v2406/platforms/linuxARM64GccDPInt32Opt/bin; else echo 'Build failed, see /opt/OpenFOAM/build.log for details'; fi"
 
+RUN passwd -d root
+
+RUN apt-get update && apt-get install -y python3-pip
+
 # Switch to a non-root user if necessary
 USER openfoam
+
+RUN pip install pandas
 
 # Set the working directory
 WORKDIR /home/openfoam
 
-# Copy the local directory to the container
-COPY . /home/openfoam/case
-
 # Set entrypoint to bash
-ENTRYPOINT ["/bin/bash"]
-
-# Optional: Verify the installation by listing the binaries
-RUN /bin/bash -c "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc && ls \$FOAM_APPBIN"
+CMD ["bash"]

@@ -7,8 +7,9 @@ def run_command(command, check_output=True):
     source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
     # source_openfoam = "source /opt/openfoam-dev/etc/bashrc"
     full_command = f"bash -c '{source_openfoam} && {command}'"
+    print(f"Start command: {command}")
     result = subprocess.run(full_command, shell=True, capture_output=True, text=True)
-    print(f"Command: {command}")
+    print(f"Finish command: {command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
         print(f"STDERR:\n{result.stderr}")
