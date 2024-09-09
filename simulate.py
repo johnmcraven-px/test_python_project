@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 
 def main():
     # Set up command line argument parsing
@@ -19,9 +20,12 @@ def main():
         'num_blades': args.num_blades,
         'air_flow_speed': args.air_flow_speed
     }
+
+
+    os.makedirs("../data/output", exist_ok=True)
     
     # Save the data to a JSON file
-    with open('simulated.vtk', 'w') as json_file:
+    with open('../data/output/simulated.vtk', 'w') as json_file:
         json.dump(data, json_file, indent=4)
     
     print("Data has been saved to simulated.vtk")
