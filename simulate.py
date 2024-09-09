@@ -22,10 +22,10 @@ def main():
     }
 
 
-    os.makedirs("../data/output", exist_ok=True)
+    os.makedirs("../data/sim_output", exist_ok=True)
     
     # Save the data to a JSON file
-    with open('../data/output/simulated.vtk', 'w') as json_file:
+    with open('../data/sim_output/simulated.vtk', 'w') as json_file:
         json.dump(data, json_file, indent=4)
     
     print("Data has been saved to simulated.vtk")
