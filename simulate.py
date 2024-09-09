@@ -9,7 +9,7 @@ def main():
     # Add positional arguments
     parser.add_argument('blade_length', type=float, help='Length of the blade')
     parser.add_argument('num_blades', type=int, help='Number of blades')
-    parser.add_argument('air_flow_speed', type=int, help='Air flow speed')
+    parser.add_argument('air_flow_speed', type=float, help='Air flow speed')
     
     # Parse arguments
     args = parser.parse_args()
