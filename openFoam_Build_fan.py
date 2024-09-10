@@ -2,9 +2,7 @@ import subprocess
 import os
 import pandas as pd
 import openfoam_functions as of
-
-# Define the Docker container name
-DOCKER_CONTAINER_NAME = "openfoam_container_new2"
+import traceback
 
 def main():
     # Set the number processors 
@@ -19,30 +17,29 @@ def main():
     run_sim = True
 
 
-    # Set the case directory inside Docker
-    case_dir = "/home/openfoam/case/"  # Directory inside Docker container]
+    # Set the case directory
+    case_dir = "/home/openfoam/case/"
     forces_file = 'case/postProcessing/forces/0/force.dat'
-
 
     if write_files:
         # clean up files 
-        of.run_command(f"cd {case_dir} && rm -R ./*", DOCKER_CONTAINER_NAME)
+        # of.run_command(f"cd {case_dir} && rm -R ./*")
 
         # create directory structure
-        of.create_directory_structure_in_container(case_dir, DOCKER_CONTAINER_NAME)
+        of.create_directory_structure_in_container(case_dir)
 
         # move the stl files to the right location
-        stl_files_source = os.path.expanduser("./output/geometry_new/")  # STL file on the host
+        stl_files_source = os.path.expanduser("./output/")  # STL file on the host
         stl_files_container_location = os.path.join(case_dir, "constant/triSurface/")
 
     
         # run_command(f"cd {case_dir} && mkdir {stl_files_container_location}")
-        of.copy_file_to_container(stl_files_source + "AMI.stl", stl_files_container_location, DOCKER_CONTAINER_NAME)
-        of.copy_file_to_container(stl_files_source + "desk.stl", stl_files_container_location, DOCKER_CONTAINER_NAME)
-        of.copy_file_to_container(stl_files_source + "door.stl", stl_files_container_location, DOCKER_CONTAINER_NAME)
-        of.copy_file_to_container(stl_files_source + "fan.stl", stl_files_container_location, DOCKER_CONTAINER_NAME)
-        of.copy_file_to_container(stl_files_source + "outlet.stl", stl_files_container_location, DOCKER_CONTAINER_NAME)
-        of.copy_file_to_container(stl_files_source + "room.stl", stl_files_container_location, DOCKER_CONTAINER_NAME)
+        of.copy_file(stl_files_source + "AMI.stl", stl_files_container_location)
+        of.copy_file(stl_files_source + "desk.stl", stl_files_container_location)
+        of.copy_file(stl_files_source + "door.stl", stl_files_container_location)
+        of.copy_file(stl_files_source + "fan.stl", stl_files_container_location)
+        of.copy_file(stl_files_source + "outlet.stl", stl_files_container_location)
+        of.copy_file(stl_files_source + "room.stl", stl_files_container_location)
 
 
         # Setup the OpenFOAM case
@@ -53,47 +50,58 @@ def main():
         time_step = 0.0002 # recommended setting is 0.0002
         write_interval = 0.02 # recommended setting is 0.02
         center_of_rotation = "(-3 2 2.6)"
-        of.create_openfoam_case(case_dir, number_of_subdomains=num_processors, docker_container_name=DOCKER_CONTAINER_NAME, 
+        of.create_openfoam_case(case_dir, number_of_subdomains=num_processors, 
                                 sim_end_time=sim_end_time, fine_mesh_level=fine_mesh_level, course_mesh_level=course_mesh_level, 
                                 rotation_speed= rotation_speed, time_step=time_step, write_interval=write_interval, 
                                 center_of_rotation=center_of_rotation)
 
     if build_mesh:
         # set up the openfoam simualtion
-        of.run_command(f"cd {case_dir} && touch open.foam", DOCKER_CONTAINER_NAME)
-        of.run_command(f"cd {case_dir} && surfaceFeatureExtract", DOCKER_CONTAINER_NAME)
-        of.run_command(f"cd {case_dir} && blockMesh", DOCKER_CONTAINER_NAME)
+        of.run_command(f"cd {case_dir} && touch open.foam")
+        of.run_command(f"cd {case_dir} && surfaceFeatureExtract")
+        of.run_command(f"cd {case_dir} && blockMesh")
     
         if mesh_par: 
-            of.run_command(f"cd {case_dir} && decomposePar -force", DOCKER_CONTAINER_NAME) # decompose mesh
-            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite', DOCKER_CONTAINER_NAME)
-            of.run_command(f'cd {case_dir} && reconstructParMesh -constant', DOCKER_CONTAINER_NAME)
+            of.run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
+            of.run_command(f'cd {case_dir} && reconstructParMesh -constant')
         else:
-            of.run_command(f"cd {case_dir} && snappyHexMesh -overwrite", DOCKER_CONTAINER_NAME)
+            of.run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
     
     
-        of.run_command(f"cd {case_dir} && rm -rf 0", DOCKER_CONTAINER_NAME)
-        of.run_command(f"cd {case_dir} && renumberMesh -overwrite", DOCKER_CONTAINER_NAME)
-        of.run_command(f"cd {case_dir} && createPatch -overwrite", DOCKER_CONTAINER_NAME)
+        of.run_command(f"cd {case_dir} && rm -rf 0")
+        of.run_command(f"cd {case_dir} && renumberMesh -overwrite")
+        of.run_command(f"cd {case_dir} && createPatch -overwrite")
 
     if write_files:
-        of.create_openfoam_initial_conditions(case_dir, DOCKER_CONTAINER_NAME)
+        of.create_openfoam_initial_conditions(case_dir)
 
     # Run the simulation in parallel (note already decomposed)
     if run_sim:
         if sim_par:
-            of.run_command(f"cd {case_dir} && decomposePar -force", DOCKER_CONTAINER_NAME) # decompose mesh
-            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam', DOCKER_CONTAINER_NAME)
-            of.run_command(f'cd {case_dir} && reconstructPar', DOCKER_CONTAINER_NAME)
+            of.run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
+            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam')
+            of.run_command(f'cd {case_dir} && reconstructPar')
         else:
-            of.run_command(f'cd {case_dir} && pimpleFoam > log.pimpleFoam', DOCKER_CONTAINER_NAME)
+            of.run_command(f'cd {case_dir} && pimpleFoam > log.pimpleFoam')
         
         # generate VTK files and post process 
-        of.run_command(f'cd {case_dir} && foamToVTK', DOCKER_CONTAINER_NAME)
+        of.run_command(f'cd {case_dir} && foamToVTK')
     
     # Extract forces data
     forces_data = of.extract_forces_data(forces_file)
     print(forces_data.head())
 
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as e:
+        error_message = traceback.format_exc()
+        print(f"An error occurred1:\n{error_message}")
+    except OSError as e:
+        error_message = traceback.format_exc()
+        print(f"An error occurred2:\n{error_message}")
+    except BaseException as e:
+        error_message = traceback.format_exc()
+        print(f"An error occurred3:\n{error_message}")
