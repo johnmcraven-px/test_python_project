@@ -31,25 +31,26 @@ def generate_model_json(num_files, output_file):
     print(f"Dummy model saved to {output_file}")
 
 def generate_training_csv(num_files, output_file):
-    # Simulate training data with slight randomization, converging more if there are more files
-    num_epochs = 50
-    loss = 1.0
-    # accuracy = 0.5
+    max_loss = 1.0
+    min_loss = 4 / (num_files + 1)  # Exponential decay limit based on num_files
+    decay_factor = np.log(min_loss / max_loss) / num_epochs  # Decay rate over epochs
+
     training_data = []
-    
+    loss = max_loss
+
     for epoch in range(1, num_epochs + 1):
-        # More files = better convergence, so reduce noise if more files are found
-        loss_noise = random.uniform(0.05, 0.25) / (num_files + 1)
-        # accuracy_noise = random.uniform(0.01, 0.03) / (num_files + 1)
-        
-        # Simulate loss decreasing and accuracy increasing as epochs go on
-        loss -= 0.02 - loss_noise
-        # accuracy += 0.05 + accuracy_noise
-        
-        # Ensure loss and accuracy stay within bounds
-        loss = max(loss, 0.01)
-        # accuracy = min(accuracy, 1.0)
-        
+        # Exponential decay of the loss
+        loss = max_loss * np.exp(decay_factor * epoch)
+
+        # Add more noise to lower epochs, decreasing as the number of epochs increases
+        noise_factor = random.uniform(0.05, 0.25) / (num_files + 1) * (1.0 / np.sqrt(epoch))
+
+        # Adjust the loss with some random noise
+        loss += noise_factor
+
+        # Ensure the loss value doesn't drop below the minimum
+        loss = max(loss, min_loss)
+
         training_data.append([epoch, loss])
     
     # Write the data to CSV
