@@ -39,7 +39,7 @@ def generate_training_csv(num_files, output_file):
     
     for epoch in range(1, num_epochs + 1):
         # More files = better convergence, so reduce noise if more files are found
-        loss_noise = random.uniform(0.002, 0.01) / (num_files + 1)
+        loss_noise = random.uniform(0.2, 0.4) / (num_files + 1)
         # accuracy_noise = random.uniform(0.01, 0.03) / (num_files + 1)
         
         # Simulate loss decreasing and accuracy increasing as epochs go on
