@@ -43,7 +43,7 @@ def generate_training_csv(num_files, output_file):
         # accuracy_noise = random.uniform(0.01, 0.03) / (num_files + 1)
         
         # Simulate loss decreasing and accuracy increasing as epochs go on
-        loss -= 0.1 - loss_noise
+        loss -= 0.02 - loss_noise
         # accuracy += 0.05 + accuracy_noise
         
         # Ensure loss and accuracy stay within bounds
