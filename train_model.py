@@ -3,6 +3,7 @@ import re
 import json
 import random
 import csv
+import numpy as np
 
 def find_files(directory, pattern):
     # Find all files that match the pattern
