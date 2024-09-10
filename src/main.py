@@ -40,6 +40,12 @@ lastVegaSpecs: Dict[str, str] | None = None
 def generateCharts(initial_selection) -> DashboardResponse:
     vegaSpecs: Dict[str, str] = {}
 
+
+    def addChartSpec(key: str, chart: alt.Chart): 
+        vega_lite_spec = chart.to_dict()
+        vega_lite_spec_str = json.dumps(vega_lite_spec)
+        vegaSpecs[key] = vega_lite_spec_str
+
     df = pd.read_csv("../data/model_output/training_data.csv")
     loss_vs_epoch = alt.Chart(df).mark_line(point=True).encode(
         x='Epoch:Q',
