@@ -50,7 +50,7 @@ def generate_training_csv(num_files, output_file):
         loss = max(loss, 0.01)
         # accuracy = min(accuracy, 1.0)
         
-        training_data.append([epoch, loss, accuracy])
+        training_data.append([epoch, loss])
     
     # Write the data to CSV
     with open(output_file, 'w', newline='') as csv_file:
