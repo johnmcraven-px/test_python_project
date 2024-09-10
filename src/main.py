@@ -7,8 +7,6 @@ import json
 from dashboardTypes import DashboardResponse, RowLayoutType, ListLayoutType, ComponentLayoutType, LayoutType, UpdatesFromSignalsRequest, UpdatesFromSignalsResponse, ParamControl
 
 def getLayout() -> LayoutType:
-    blade_length = ParamControl(type="range", labelTitle="blade_length", displayName="Blade Length", numberType="float", defaultStart=5, defaultEnd=5, defaultStep=1)
-    num_blades = ParamControl(type="range", labelTitle="num_blades", displayName="Num Blades", numberType="integer", defaultStart=4, defaultEnd=4, defaultStep=1)
     row1 = RowLayoutType(
         type="row",
         className="items-stretch",
@@ -18,29 +16,8 @@ def getLayout() -> LayoutType:
                 type="component",
                 className="flex-1",
                 style=None,
-                componentName="ExperimentSelectorView",
-                componentState={}
-            ),
-        ]
-    )
-    row2 = RowLayoutType(
-        type="row",
-        className="items-stretch",
-        style={"minHeight": 400},
-        content=[
-            ComponentLayoutType(
-                type="component",
-                className="flex-1",
-                style={"minHeight": 400},
-                componentName="TransformRunView",
-                componentState={"paramControls": [blade_length, num_blades]}
-            ),
-            ComponentLayoutType(
-                type="component",
-                className="flex-1",
-                style={"minHeight": 400},
-                componentName="BatchRunTableView",
-                componentState={}
+                componentName="VegaLiteChart",
+                componentState={"specId": "loss_vs_epoch", "autoScale": True}
             ),
         ]
     )
@@ -50,7 +27,6 @@ def getLayout() -> LayoutType:
         style=None,
         content=[
             row1,
-            row2
 
         ]
     )
@@ -63,6 +39,16 @@ lastVegaSpecs: Dict[str, str] | None = None
 
 def generateCharts(initial_selection) -> DashboardResponse:
     vegaSpecs: Dict[str, str] = {}
+
+    df = pd.read_csv("../data/model_output/training_data.csv")
+    loss_vs_epoch = alt.Chart(df).mark_line(point=True).encode(
+        x='Epoch:Q',
+        y='Loss:Q',
+        tooltip=['Epoch', 'Loss']
+    ).properties(
+        title='Loss vs Epoch'
+    )
+    addChartSpec("loss_vs_epoch", loss_vs_epoch)
     return DashboardResponse(layout=getLayout(), vegaSpecs=vegaSpecs)
 
 
@@ -70,7 +56,7 @@ def generateCharts(initial_selection) -> DashboardResponse:
 def initialize():
     return generateCharts(None)
 
-@app.post("/updates_from_signals")
-def update_chart(request: UpdatesFromSignalsRequest) -> UpdatesFromSignalsResponse:
-    return UpdatesFromSignalsResponse(vegaSpecs={})
+# @app.post("/updates_from_signals")
+# def update_chart(request: UpdatesFromSignalsRequest) -> UpdatesFromSignalsResponse:
+#     return UpdatesFromSignalsResponse(vegaSpecs={})
 
