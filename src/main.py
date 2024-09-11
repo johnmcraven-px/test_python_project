@@ -17,7 +17,7 @@ def getLayout() -> LayoutType:
                 className="flex-1",
                 style=None,
                 componentName="VegaLiteChart",
-                componentState={"specId": "loss_vs_epoch", "autoScale": True}
+                componentState={"specId": "combined_plot", "autoScale": True}
             ),
         ]
     )
@@ -46,15 +46,25 @@ def generateCharts(initial_selection) -> DashboardResponse:
         vega_lite_spec_str = json.dumps(vega_lite_spec)
         vegaSpecs[key] = vega_lite_spec_str
 
-    df = pd.read_csv("../data/model_output/training_data.csv")
-    loss_vs_epoch = alt.Chart(df).mark_line(point=True).encode(
-        x='Epoch:Q',
-        y='Loss:Q',
-        tooltip=['Epoch', 'Loss']
-    ).properties(
-        title='Loss vs Epoch'
+    scatter_data = pd.read_csv("../data/optimize_output/scatter.csv")
+    pareto_frontier = pd.read_csv("../data/optimize_output/curve.csv")
+    
+    scatter_plot = alt.Chart(scatter_data).mark_circle(size=60).encode(
+        x='metricX:Q',
+        y='metricY:Q',
+        color='num_blades:O',  # Color by number of blades
+        tooltip=['metricX', 'metricY', 'num_blades', 'blade_length']
     )
-    addChartSpec("loss_vs_epoch", loss_vs_epoch)
+    
+    # Line plot for the Pareto frontier
+    pareto_plot = alt.Chart(pareto_frontier).mark_line(color='red').encode(
+        x='metricX:Q',
+        y='metricY:Q'
+    )
+    combined_plot = alt.layer(scatter_plot, pareto_plot).properties(
+        title='Scatter Plot with Pareto Frontier'
+    )
+    addChartSpec("combined_plot", combined_plot)
     return DashboardResponse(layout=getLayout(), vegaSpecs=vegaSpecs)
 
 
