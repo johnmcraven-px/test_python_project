@@ -118,7 +118,7 @@ def main():
     pareto_data.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Find the top 10 points closest to the Pareto front
-    top_10_points = find_top_10_closest_points(data)
+    top_10_points = find_top_10_closest_points(scatter_data)
 
     # Output the top 10 points to individual JSON files
     output_top_10_points_to_json(top_10_points)
