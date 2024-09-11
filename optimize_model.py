@@ -147,7 +147,7 @@ def main():
     scatter_data = generate_scatter_data(num_files_used)
     scatter_data.to_csv("../data/optimize_output/scatter.csv", index=False)
 
-    fitted_curve = fit_minimum_boundary(scatter_data)
+    fitted_curve, curve_params = fit_minimum_boundary(scatter_data)
     fitted_curve.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Step 4: Find the top 10 closest points to the curve
