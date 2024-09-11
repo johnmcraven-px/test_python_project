@@ -72,7 +72,7 @@ def find_pareto_frontier(scatter_data):
 def write_pareto_frontier_to_csv(pareto_frontier):
     """Write Pareto frontier data to a CSV file."""
     pareto_frontier.to_csv("../data/optimize_output/curve.csv", index=False)
-    print(f"Pareto frontier data has been written to {output_csv}")
+    print(f"Pareto frontier data has been written to ../data/optimize_output/curve.csv")
 
 def calculate_distance_to_pareto(scatter_data, pareto_frontier):
     """Calculate the distance of each point to the Pareto frontier."""
