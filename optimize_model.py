@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import os
-from scipy.spatial import ConvexHull
 
 def read_model_json(json_file):
     """Read the model JSON and return num_files_used."""
@@ -29,20 +28,14 @@ def generate_scatter_data(num_files_used, num_points=100):
         # Compute the "distance" from the optimal point
         delta_blades = num_blades - optimal_num_blades
         delta_blade_length = blade_length - optimal_blade_length
+        rad = random.uniform(0, np.pi / 2.0)
+        constant_error = 2.0 / num_files_used
 
-        # Use some predictable function to map to metricX and metricY
-        # We use sine and cosine here with the deltas to simulate variation
-        metricX = abs(delta_blades * np.cos(blade_length * np.pi)) + 0.5
-        metricY = abs(delta_blade_length * np.sin(num_blades * np.pi / 3)) + 0.5
+        xerr = random.uniform(0, 0.1)
+        yerr = random.uniform(0, 0.1)
 
-        # Add some noise based on the number of files used (more files = less noise)
-        noise_factor = 1.0 / np.sqrt(num_files_used)
-        metricX += random.uniform(-0.1, 0.1) * noise_factor
-        metricY += random.uniform(-0.1, 0.1) * noise_factor
-
-        # Ensure values stay within reasonable bounds (e.g., don't hit zero)
-        metricX = max(0.1, metricX)
-        metricY = max(0.1, metricY)
+        metricX = .1 + (1 - np.sin(rad)) * 0.9 + xerr + constant_error
+        metricY = .1 + (1 - np.cos(rad)) * 0.9 + xerr + constant_error
 
         # Append the generated point to the data
         data.append({
@@ -54,45 +47,33 @@ def generate_scatter_data(num_files_used, num_points=100):
 
     return pd.DataFrame(data)
 
-
-def find_pareto_frontier(scatter_data):
-    """Find the Pareto frontier using the Convex Hull algorithm."""
-    # Select only metricX and metricY columns for fitting the Pareto frontier
-    points = scatter_data[['metricX', 'metricY']].values
-
-    # Compute the Convex Hull, which includes the Pareto frontier
-    hull = ConvexHull(points)
-
-    # Extract the points that form the Pareto frontier
-    pareto_points = scatter_data.iloc[hull.vertices].sort_values(by='metricX')
+def pareto_front_data():
+    """Generate the Pareto front for the quarter-circle region."""
+    # The Pareto front is a quarter circle from (1, 0) to (0, 1)
+    rad = np.linspace(0, np.pi / 2, 100)
     
-    return pareto_points
-
-
-def write_pareto_frontier_to_csv(pareto_frontier):
-    """Write Pareto frontier data to a CSV file."""
-    pareto_frontier.to_csv("../data/optimize_output/curve.csv", index=False)
-    print(f"Pareto frontier data has been written to ../data/optimize_output/curve.csv")
-
-def calculate_distance_to_pareto(scatter_data, pareto_frontier):
-    """Calculate the distance of each point to the Pareto frontier."""
-    scatter_data['distance_to_pareto'] = np.inf  # Start with large distances
-
-    # Calculate the minimum distance to the Pareto frontier for each point
-    for i, row in scatter_data.iterrows():
-        scatter_data.at[i, 'distance_to_pareto'] = np.min(np.sqrt(
-            (pareto_frontier['metricX'] - row['metricX'])**2 +
-            (pareto_frontier['metricY'] - row['metricY'])**2
-        ))
+    pareto_data = pd.DataFrame({
+        'metricX': .1 + (1 - np.sin(rad)) * 0.9,  # x-coordinates of Pareto front
+        'metricY': .1 + (1 - np.cos(rad)) * 0.9   # y-coordinates of Pareto front
+    })
     
-    return scatter_data
+    return pareto_data
 
-def find_top_10_closest_points_to_pareto(scatter_data, pareto_frontier):
-    """Find the top 10 points closest to the Pareto frontier."""
-    scatter_data_with_distances = calculate_distance_to_pareto(scatter_data, pareto_frontier)
+
+def find_top_10_closest_points(data):
+    """Find the top 10 points closest to the Pareto front."""
+    # The Pareto front is a quarter circle with metricX^2 + metricY^2 = constant
+    # We calculate the distance from each point to the Pareto front curve
+    pareto_curve = plot_pareto_front().data
+
+    # Calculate distance to the Pareto front for each point in data
+    data['distance_to_pareto'] = np.sqrt(
+        (data['metricX'] - pareto_curve['metricX'].values[:, None])**2 +
+        (data['metricY'] - pareto_curve['metricY'].values[:, None])**2
+    ).min(axis=0)
     
     # Sort by distance and select the top 10 closest points
-    top_10_points = scatter_data_with_distances.nsmallest(10, 'distance_to_pareto')
+    top_10_points = data.nsmallest(10, 'distance_to_pareto')
     
     return top_10_points
 
@@ -133,12 +114,11 @@ def main():
     scatter_data = generate_scatter_data(num_files_used)
     scatter_data.to_csv("../data/optimize_output/scatter.csv", index=False)
 
-    pareto_frontier = find_pareto_frontier(scatter_data)
-    # Step 3: Write the Pareto frontier to a separate CSV
-    write_pareto_frontier_to_csv(pareto_frontier)
+    pareto_data = pareto_front_data(scatter_data)
+    pareto_data.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Step 4: Find the top 10 closest points to the Pareto frontier
-    top_10_points = find_top_10_closest_points_to_pareto(scatter_data, pareto_frontier)
+    top_10_points = find_top_10_closest_points_to_pareto(scatter_data, pareto_data)
 
     # Step 5: Output each of the top 10 points to individual JSON files
     output_top_10_points_to_json(top_10_points)
