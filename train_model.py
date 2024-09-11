@@ -32,7 +32,7 @@ def generate_model_json(num_files, output_file):
     print(f"Dummy model saved to {output_file}")
 
 def generate_training_csv(num_files, output_file):
-    num_epochs = 50
+    num_epochs = 100
     max_loss = 1.0
     min_loss = 4 / (num_files + 1)  # Exponential decay limit based on num_files
     decay_factor = np.log(min_loss / max_loss) / num_epochs  # Decay rate over epochs
