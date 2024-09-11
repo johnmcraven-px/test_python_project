@@ -114,7 +114,7 @@ def main():
     scatter_data = generate_scatter_data(num_files_used)
     scatter_data.to_csv("../data/optimize_output/scatter.csv", index=False)
 
-    pareto_data = pareto_front_data(scatter_data)
+    pareto_data = pareto_front_data()
     pareto_data.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Step 4: Find the top 10 closest points to the Pareto frontier
