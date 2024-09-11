@@ -69,7 +69,7 @@ def find_top_10_closest_points(data, pareto_front):
     ).min(axis=1)
     
     # Sort by distance and select the top 10 closest points
-    top_10_points = data.nsmallest(10, 'distance_to_pareto')
+    top_10_points = data.nsmallest(2, 'distance_to_pareto')
     
     return top_10_points
 
