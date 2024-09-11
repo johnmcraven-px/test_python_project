@@ -46,14 +46,16 @@ def generate_scatter_data(num_files_used, num_points=100):
     # Return the data as a Pandas DataFrame
     return pd.DataFrame(data)
 
-def generate_pareto_front():
+def generate_pareto_front(num_files_used):
     """Generate the Pareto front for the quarter-circle region."""
     # The Pareto front is a quarter circle from (1, 0) to (0, 1)
     rad = np.linspace(0, np.pi / 2, 100)
+
+    constant_error = 2.0 / num_files_used
     
     pareto_data = pd.DataFrame({
-        'metricX': .1 + (1 - np.sin(rad)) * 0.9,  # x-coordinates of Pareto front
-        'metricY': .1 + (1 - np.cos(rad)) * 0.9   # y-coordinates of Pareto front
+        'metricX': .1 + (1 - np.sin(rad)) * 0.9 + constant_error,  # x-coordinates of Pareto front
+        'metricY': .1 + (1 - np.cos(rad)) * 0.9 + constant_error   # y-coordinates of Pareto front
     })
     
     return pareto_data
