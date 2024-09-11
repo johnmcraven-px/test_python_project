@@ -111,7 +111,7 @@ def main():
     data.to_csv("../data/optimize_output/scatter.csv", index=False)
 
     # Generate the Pareto front
-    pareto_front = generate_pareto_front()
+    pareto_front = generate_pareto_front(num_files_used)
     pareto_front.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Find the top 10 points closest to the Pareto front
