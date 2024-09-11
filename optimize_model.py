@@ -14,10 +14,6 @@ def read_model_json(json_file):
 def generate_scatter_data(num_files_used, num_points=100):
     """Generate scatter data with metricX and metricY based on num_blades and blade_length."""
     
-    # The optimal values for num_blades and blade_length where metricX^2 + metricY^2 is minimized
-    optimal_num_blades = 4
-    optimal_blade_length = 0.45
-
     data = []
 
     for _ in range(num_points):
@@ -25,17 +21,19 @@ def generate_scatter_data(num_files_used, num_points=100):
         num_blades = random.randint(2, 7)
         blade_length = random.uniform(0.2, 0.7)
 
-        # Compute the "distance" from the optimal point
-        delta_blades = num_blades - optimal_num_blades
-        delta_blade_length = blade_length - optimal_blade_length
+        # Generate a random angle between 0 and pi/2 for a quarter circle
         rad = random.uniform(0, np.pi / 2.0)
+        
+        # Constant error factor, inversely proportional to num_files_used
         constant_error = 2.0 / num_files_used
 
+        # Random noise for metricX and metricY
         xerr = random.uniform(0, 0.1)
         yerr = random.uniform(0, 0.1)
 
+        # Calculate metricX and metricY based on the radian angle and the error terms
         metricX = .1 + (1 - np.sin(rad)) * 0.9 + xerr + constant_error
-        metricY = .1 + (1 - np.cos(rad)) * 0.9 + xerr + constant_error
+        metricY = .1 + (1 - np.cos(rad)) * 0.9 + yerr + constant_error
 
         # Append the generated point to the data
         data.append({
@@ -45,9 +43,10 @@ def generate_scatter_data(num_files_used, num_points=100):
             'metricY': metricY
         })
 
+    # Return the data as a Pandas DataFrame
     return pd.DataFrame(data)
 
-def pareto_front_data():
+def generate_pareto_front():
     """Generate the Pareto front for the quarter-circle region."""
     # The Pareto front is a quarter circle from (1, 0) to (0, 1)
     rad = np.linspace(0, np.pi / 2, 100)
@@ -59,15 +58,13 @@ def pareto_front_data():
     
     return pareto_data
 
-
-def find_top_10_closest_points(pareto_curve, data):
+def find_top_10_closest_points(data, pareto_front):
     """Find the top 10 points closest to the Pareto front."""
-
-    # Calculate distance to the Pareto front for each point in data
+    # Calculate the minimum Euclidean distance to the Pareto front for each point
     data['distance_to_pareto'] = np.sqrt(
-        (data['metricX'] - pareto_curve['metricX'].values[:, None])**2 +
-        (data['metricY'] - pareto_curve['metricY'].values[:, None])**2
-    ).min(axis=0)
+        (data['metricX'].values[:, None] - pareto_front['metricX'].values)**2 +
+        (data['metricY'].values[:, None] - pareto_front['metricY'].values)**2
+    ).min(axis=1)
     
     # Sort by distance and select the top 10 closest points
     top_10_points = data.nsmallest(10, 'distance_to_pareto')
@@ -107,15 +104,16 @@ def main():
     num_files_used = read_model_json(json_file)
     print(f"Number of files used: {num_files_used}")
 
-    # Step 2: Generate the scatter data
-    scatter_data = generate_scatter_data(num_files_used)
-    scatter_data.to_csv("../data/optimize_output/scatter.csv", index=False)
 
-    pareto_data = pareto_front_data()
-    pareto_data.to_csv("../data/optimize_output/curve.csv", index=False)
+    data = generate_scatter_data(num_files_used)
+    data.to_csv("../data/optimize_output/scatter.csv", index=False)
+
+    # Generate the Pareto front
+    pareto_front = generate_pareto_front()
+    pareto_front.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Find the top 10 points closest to the Pareto front
-    top_10_points = find_top_10_closest_points(pareto_data, scatter_data)
+    top_10_points = find_top_10_closest_points(data, pareto_front)
 
     # Output the top 10 points to individual JSON files
     output_top_10_points_to_json(top_10_points)
