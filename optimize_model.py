@@ -60,11 +60,8 @@ def pareto_front_data():
     return pareto_data
 
 
-def find_top_10_closest_points(data):
+def find_top_10_closest_points(pareto_curve, data):
     """Find the top 10 points closest to the Pareto front."""
-    # The Pareto front is a quarter circle with metricX^2 + metricY^2 = constant
-    # We calculate the distance from each point to the Pareto front curve
-    pareto_curve = plot_pareto_front().data
 
     # Calculate distance to the Pareto front for each point in data
     data['distance_to_pareto'] = np.sqrt(
@@ -118,7 +115,7 @@ def main():
     pareto_data.to_csv("../data/optimize_output/curve.csv", index=False)
 
     # Find the top 10 points closest to the Pareto front
-    top_10_points = find_top_10_closest_points(scatter_data)
+    top_10_points = find_top_10_closest_points(pareto_data, scatter_data)
 
     # Output the top 10 points to individual JSON files
     output_top_10_points_to_json(top_10_points)
