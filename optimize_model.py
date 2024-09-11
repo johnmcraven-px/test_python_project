@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import os
+from scipy.optimize import curve_fit
 
 def read_model_json(json_file):
     """Read the model JSON and return num_files_used."""
