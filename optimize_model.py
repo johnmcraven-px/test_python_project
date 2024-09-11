@@ -4,34 +4,13 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import os
-from scipy.optimize import curve_fit
+from scipy.spatial import ConvexHull
 
 def read_model_json(json_file):
     """Read the model JSON and return num_files_used."""
     with open(json_file, 'r') as file:
         model_data = json.load(file)
         return model_data.get('num_files_used', 1)  # Default to 1 if missing
-
-def fit_minimum_boundary(scatter_data):
-    """Fit a curve to the minimum boundary using curve fitting."""
-    
-    # Define a function that models the boundary as a quadratic curve (as an example)
-    def boundary_func(blades_length, a, b, c):
-        return a * blades_length**2 + b * blades_length + c
-
-    # Sort the data by blade_length for better fitting
-    scatter_data_sorted = scatter_data.sort_values(by='blade_length')
-
-    # Fit the curve using the num_blades as a rough representation of blade effect on minimum
-    params, _ = curve_fit(boundary_func, scatter_data_sorted['blade_length'], scatter_data_sorted['metricX'] + scatter_data_sorted['metricY'])
-
-    # Generate fitted values for plotting and output
-    fitted_curve = pd.DataFrame({
-        'blade_length': scatter_data_sorted['blade_length'],
-        'fitted_metric': boundary_func(scatter_data_sorted['blade_length'], *params)
-    })
-
-    return fitted_curve, params
 
 def generate_scatter_data(num_files_used, num_points=100):
     """Generate scatter data with metricX and metricY based on num_blades and blade_length."""
@@ -76,31 +55,51 @@ def generate_scatter_data(num_files_used, num_points=100):
     return pd.DataFrame(data)
 
 
-def calculate_distance_to_curve(scatter_data, fitted_curve):
-    """Calculate the distance of each point to the curve."""
-    # Merge scatter data and fitted curve on blade_length
-    merged_data = pd.merge(scatter_data, fitted_curve, on='blade_length')
-    
-    # Calculate the distance as sqrt((metricX - fitted_metric)^2 + (metricY - fitted_metric)^2)
-    merged_data['distance_to_curve'] = np.sqrt(
-        (merged_data['metricX'] - merged_data['fitted_metric'])**2 + 
-        (merged_data['metricY'] - merged_data['fitted_metric'])**2
-    )
-    
-    return merged_data
+def find_pareto_frontier(scatter_data):
+    """Find the Pareto frontier using the Convex Hull algorithm."""
+    # Select only metricX and metricY columns for fitting the Pareto frontier
+    points = scatter_data[['metricX', 'metricY']].values
 
-def find_top_10_closest_points(scatter_data, fitted_curve):
-    """Find the top 10 points closest to the fitted curve."""
-    merged_data = calculate_distance_to_curve(scatter_data, fitted_curve)
+    # Compute the Convex Hull, which includes the Pareto frontier
+    hull = ConvexHull(points)
+
+    # Extract the points that form the Pareto frontier
+    pareto_points = scatter_data.iloc[hull.vertices].sort_values(by='metricX')
+    
+    return pareto_points
+
+
+def write_pareto_frontier_to_csv(pareto_frontier):
+    """Write Pareto frontier data to a CSV file."""
+    pareto_frontier.to_csv("../data/optimize_output/curve.csv", index=False)
+    print(f"Pareto frontier data has been written to {output_csv}")
+
+def calculate_distance_to_pareto(scatter_data, pareto_frontier):
+    """Calculate the distance of each point to the Pareto frontier."""
+    scatter_data['distance_to_pareto'] = np.inf  # Start with large distances
+
+    # Calculate the minimum distance to the Pareto frontier for each point
+    for i, row in scatter_data.iterrows():
+        scatter_data.at[i, 'distance_to_pareto'] = np.min(np.sqrt(
+            (pareto_frontier['metricX'] - row['metricX'])**2 +
+            (pareto_frontier['metricY'] - row['metricY'])**2
+        ))
+    
+    return scatter_data
+
+def find_top_10_closest_points_to_pareto(scatter_data, pareto_frontier):
+    """Find the top 10 points closest to the Pareto frontier."""
+    scatter_data_with_distances = calculate_distance_to_pareto(scatter_data, pareto_frontier)
     
     # Sort by distance and select the top 10 closest points
-    top_10_points = merged_data.nsmallest(10, 'distance_to_curve')
+    top_10_points = scatter_data_with_distances.nsmallest(10, 'distance_to_pareto')
     
     return top_10_points
 
 def output_top_10_points_to_json(top_10_points, output_dir='../data/points_output'):
     """Output the top 10 points to individual JSON files."""
     # Ensure the output directory exists
+    os.makedirs(output_dir, exist_ok=True)
     
     for _, row in top_10_points.iterrows():
         file_name = f"point_{row['blade_length']:.2f}_{row['num_blades']}.json"
@@ -112,7 +111,7 @@ def output_top_10_points_to_json(top_10_points, output_dir='../data/points_outpu
             'num_blades': row['num_blades'],
             'metricX': row['metricX'],
             'metricY': row['metricY'],
-            'distance_to_curve': row['distance_to_curve']
+            'distance_to_pareto': row['distance_to_pareto']
         }
         
         # Write the JSON file
@@ -120,19 +119,6 @@ def output_top_10_points_to_json(top_10_points, output_dir='../data/points_outpu
             json.dump(point_data, json_file, indent=4)
         
         print(f"Point saved to {output_path}")
-
-# def plot_scatter_data(data):
-#     """Plot the scatter data using Altair."""
-#     scatter_plot = alt.Chart(data).mark_circle(size=60).encode(
-#         x='metricX:Q',
-#         y='metricY:Q',
-#         color='num_blades:O',  # Color by number of blades
-#         tooltip=['metricX', 'metricY', 'num_blades', 'blade_length']
-#     ).properties(
-#         title='MetricX vs MetricY Scatter Plot'
-#     )
-    
-#     return scatter_plot
 
 def main():
 
@@ -147,18 +133,16 @@ def main():
     scatter_data = generate_scatter_data(num_files_used)
     scatter_data.to_csv("../data/optimize_output/scatter.csv", index=False)
 
-    fitted_curve, curve_params = fit_minimum_boundary(scatter_data)
-    fitted_curve.to_csv("../data/optimize_output/curve.csv", index=False)
+    pareto_frontier = find_pareto_frontier(scatter_data)
+    # Step 3: Write the Pareto frontier to a separate CSV
+    write_pareto_frontier_to_csv(pareto_frontier)
 
-    # Step 4: Find the top 10 closest points to the curve
-    top_10_points = find_top_10_closest_points(scatter_data, fitted_curve)
+    # Step 4: Find the top 10 closest points to the Pareto frontier
+    top_10_points = find_top_10_closest_points_to_pareto(scatter_data, pareto_frontier)
 
     # Step 5: Output each of the top 10 points to individual JSON files
     output_top_10_points_to_json(top_10_points)
 
-    # Step 3: Plot the scatter data
-    # scatter_plot = plot_scatter_data(scatter_data)
-    # scatter_plot.show()
 
 if __name__ == "__main__":
     main()
