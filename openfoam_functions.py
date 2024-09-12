@@ -134,7 +134,7 @@ functions
         Aref            1;                     // Reference area (used for calculating lift and drag coefficients)
         CofR """ + center_of_rotation + """;                   // Center of rotation for moment calculations
     }
-    
+    #include "relVelocity";
 }
 
 
