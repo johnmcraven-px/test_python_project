@@ -2,14 +2,16 @@ import subprocess
 import os
 import pandas as pd
 
-def run_command(command, check_output=True):
-    """Run a shell command and log its output."""
+def run_command(command, run_as_root = False, check_output=True):
+    """Run a shell command in docker and log its output."""
     source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
-    # source_openfoam = "source /opt/openfoam-dev/etc/bashrc"
-    full_command = f"bash -c '{source_openfoam} && {command}'"
-    print(f"Start command: {command}")
-    result = subprocess.run(full_command, shell=True, capture_output=True, text=True)
-    print(f"Finish command: {command}")
+    if run_as_root:
+        bash_command = f"su -c 'bash -c \"{source_openfoam} && {command}\"'"
+    else:
+        bash_command = f"bash -c '{source_openfoam} && {command}'"
+
+    result = subprocess.run(bash_command, shell=True, capture_output=True, text=True)
+    print(f"Command: {command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
         print(f"STDERR:\n{result.stderr}")
@@ -17,17 +19,40 @@ def run_command(command, check_output=True):
         result.check_returncode()
     return result
 
-def copy_file(local_path, container_path):
-    """Copy a file."""
-    copy_command = f"cp '{local_path}' '{container_path}'"
+def run_command_docker(command, docker_container_name, check_output=True):
+    """Run a shell command and log its output."""
+    source_openfoam = "source /opt/OpenFOAM/OpenFOAM-v2406/etc/bashrc"
+    docker_command = f"docker exec -it {docker_container_name} bash -c '{source_openfoam} && {command}'"
+    result = subprocess.run(docker_command, shell=True, capture_output=True, text=True)
+    print(f"Command: {command}")
+    print(f"STDOUT:\n{result.stdout}")
+    if result.stderr:
+        print(f"STDERR:\n{result.stderr}")
+    if check_output:
+        result.check_returncode()
+    return result
+
+def copy_file(from_path, to_path):
+    """copy file in bash"""
+    copy_command = f"cp {from_path} {to_path}"
     result = subprocess.run(copy_command, shell=True, capture_output=True, text=True)
-    print(f"Copy Command: {copy_command}")
+    print(f"Command: {copy_command}")
+    print(f"STDOUT:\n{result.stdout}")
+    if result.stderr:
+        print(f"STDERR:\n{result.stderr}")
+    result.check_returncode()
+    
+def copy_file_to_container(local_path, container_path, docker_container_name):
+    """Copy a file from the host to the Docker container."""
+    docker_copy_command = f"docker cp '{local_path}' '{docker_container_name}:{container_path}'"
+    result = subprocess.run(docker_copy_command, shell=True, capture_output=True, text=True)
+    print(f"Copy Command: {docker_copy_command}")
     print(f"STDOUT:\n{result.stdout}")
     if result.stderr:
         print(f"STDERR:\n{result.stderr}")
     result.check_returncode()
 
-def create_directory_structure_in_container(case_dir):
+def create_directory_structure_in_container(case_dir, docker_container_name):
     dirs = [
         case_dir,
         os.path.join(case_dir, 'constant'),
@@ -36,7 +61,18 @@ def create_directory_structure_in_container(case_dir):
         os.path.join(case_dir, '0')
     ]
     for d in dirs:
-        run_command(f"mkdir -p {d}")
+        run_command_docker(f"mkdir -m 777 -p {d}", docker_container_name)
+
+def create_directory_structure(case_dir):
+    dirs = [
+        case_dir,
+        os.path.join(case_dir, 'constant'),
+        os.path.join(case_dir, 'constant/triSurface'),
+        os.path.join(case_dir, 'system'),
+        os.path.join(case_dir, '0')
+    ]
+    for d in dirs:
+        run_command(f"mkdir -m 777 -p {d}")
 
 def write_file(filepath, content):
     with open(filepath, 'w') as f:
@@ -680,13 +716,13 @@ castellatedMeshControls
 
 snapControls
 {
-    nSmoothPatch 10;
-    tolerance 2.0;
-    nSolveIter 500;
-    nRelaxIter 10;
+    nSmoothPatch 3;
+    tolerance 4.0;
+    nSolveIter 300;
+    nRelaxIter 5;
     nFeatureSnapIter 10;
     implicitFeatureSnap true;
-    explicitFeatureSnap true;
+    explicitFeatureSnap false;
     multiRegionFeatureSnap true;
 }
 
@@ -717,7 +753,7 @@ addLayersControls
 meshQualityControls
 {
     maxNonOrtho 65;
-    maxBoundarySkewness 4;
+    maxBoundarySkewness 20;
     maxInternalSkewness 4;
     maxConcave 80;
     minVol 1e-13;
@@ -728,11 +764,11 @@ meshQualityControls
     minFaceWeight 0.05;
     minVolRatio 0.01;
     minTriangleTwist -1;
-    nSmoothScale 5;
+    nSmoothScale 4;
     errorReduction 0.75;
     relaxed
     {
-        maxNonOrtho 80;
+        maxNonOrtho 75;
     }
 }
 
@@ -1324,7 +1360,7 @@ def create_openfoam_case(case_dir, number_of_subdomains, sim_end_time, fine_mesh
     
 
 def create_openfoam_initial_conditions(case_dir):
-    run_command(f"cd {case_dir} && mkdir 0")
+    run_command(f"cd {case_dir} && mkdir -m 777 0")
     create_openfoam_initial_condition_u(case_dir)
     create_openfoam_initial_condition_p(case_dir)
     create_openfoam_initial_condition_nut(case_dir)

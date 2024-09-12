@@ -16,8 +16,6 @@ def main():
     sim_par = True
     run_sim = True
 
-    # copy_rel_vel = False
-
 
     # Set the case directory
     base_dir = "/home/openfoam/"
@@ -29,10 +27,10 @@ def main():
         # of.run_command(f"cd {case_dir} && rm -R ./*")
 
         # create directory structure
-        of.create_directory_structure_in_container(case_dir)
+        of.create_directory_structure(case_dir)
 
         # move the stl files to the right location
-        stl_files_source = os.path.expanduser("./output/")  # STL file on the host
+        stl_files_source = os.path.expanduser("./output/geometry_new/")  # STL file on the host
         stl_files_container_location = os.path.join(case_dir, "constant/triSurface/")
 
     
@@ -79,20 +77,16 @@ def main():
     if write_files:
         of.create_openfoam_initial_conditions(case_dir)
 
-    # if copy_rel_vel: 
-    #     of.run_command(f"cd {case_dir} && rm -f {case_dir}system/relVelocity")
-    #     of.run_command(f"cd {base_dir} && cp {base_dir}relVelocity {case_dir}system/relVelocity")
-
     # Run the simulation in parallel (note already decomposed)
     if run_sim:
         if sim_par:
             # of.run_command(f"cd {case_dir}/dynamicCode/ && wmakeLnInclude") 
             # of.run_command(f"cd {case_dir}/dynamicCode/ && wmake libso") 
             of.run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam')
+            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam', run_as_root = False)
             of.run_command(f'cd {case_dir} && reconstructPar')
         else:
-            of.run_command(f'cd {case_dir} && pimpleFoam > log.pimpleFoam')
+            of.run_command(f'cd {case_dir} && pimpleFoam > log.pimpleFoam', run_as_root=False)
         
         # generate VTK files and post process 
         of.run_command(f'cd {case_dir} && foamToVTK')

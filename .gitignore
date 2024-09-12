@@ -2,8 +2,6 @@
 output/
 geometry_new/
 
-relVelocity
-
 #openfoam_case
 openfoam_case/
 openfoam_tutorial_case/
