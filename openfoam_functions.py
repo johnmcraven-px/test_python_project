@@ -134,7 +134,7 @@ functions
         Aref            1;                     // Reference area (used for calculating lift and drag coefficients)
         CofR """ + center_of_rotation + """;                   // Center of rotation for moment calculations
     }
-    #include "relVelocity";
+    
 }
 
 
@@ -680,13 +680,13 @@ castellatedMeshControls
 
 snapControls
 {
-    nSmoothPatch 3;
-    tolerance 4.0;
-    nSolveIter 300;
-    nRelaxIter 5;
+    nSmoothPatch 10;
+    tolerance 2.0;
+    nSolveIter 500;
+    nRelaxIter 10;
     nFeatureSnapIter 10;
     implicitFeatureSnap true;
-    explicitFeatureSnap false;
+    explicitFeatureSnap true;
     multiRegionFeatureSnap true;
 }
 
@@ -717,7 +717,7 @@ addLayersControls
 meshQualityControls
 {
     maxNonOrtho 65;
-    maxBoundarySkewness 20;
+    maxBoundarySkewness 4;
     maxInternalSkewness 4;
     maxConcave 80;
     minVol 1e-13;
@@ -728,11 +728,11 @@ meshQualityControls
     minFaceWeight 0.05;
     minVolRatio 0.01;
     minTriangleTwist -1;
-    nSmoothScale 4;
+    nSmoothScale 5;
     errorReduction 0.75;
     relaxed
     {
-        maxNonOrtho 75;
+        maxNonOrtho 80;
     }
 }
 

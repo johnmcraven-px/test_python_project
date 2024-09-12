@@ -13,7 +13,7 @@ def main():
     build_mesh = True
     mesh_par = True
     
-    sim_par = True
+    sim_par = False
     run_sim = True
 
 
@@ -79,6 +79,8 @@ def main():
     # Run the simulation in parallel (note already decomposed)
     if run_sim:
         if sim_par:
+            # of.run_command(f"cd {case_dir}/dynamicCode/ && wmakeLnInclude") 
+            # of.run_command(f"cd {case_dir}/dynamicCode/ && wmake libso") 
             of.run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
             of.run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam')
             of.run_command(f'cd {case_dir} && reconstructPar')
