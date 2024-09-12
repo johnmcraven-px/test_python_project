@@ -8,7 +8,7 @@ su - <<EOF
 # Set the working directory
 cd /home/openfoam
 rm -R -f case/
-mkdir -m 766 case
+mkdir -m 777 case
 
 cp -r /git/* .
 mv /data/output output
