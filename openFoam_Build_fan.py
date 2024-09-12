@@ -8,12 +8,12 @@ def main():
     # Set the number processors 
     num_processors = 4
     
-    write_files = True
+    write_files = False
     
-    build_mesh = True
+    build_mesh = False
     mesh_par = True
     
-    sim_par = False
+    sim_par = True
     run_sim = True
 
 
