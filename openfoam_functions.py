@@ -716,13 +716,13 @@ castellatedMeshControls
 
 snapControls
 {
-    nSmoothPatch 10;
-    tolerance 2.0;
-    nSolveIter 500;
-    nRelaxIter 10;
+    nSmoothPatch 3;
+    tolerance 4.0;
+    nSolveIter 300;
+    nRelaxIter 5;
     nFeatureSnapIter 10;
     implicitFeatureSnap true;
-    explicitFeatureSnap true;
+    explicitFeatureSnap false;
     multiRegionFeatureSnap true;
 }
 
@@ -753,7 +753,7 @@ addLayersControls
 meshQualityControls
 {
     maxNonOrtho 65;
-    maxBoundarySkewness 4;
+    maxBoundarySkewness 20;
     maxInternalSkewness 4;
     maxConcave 80;
     minVol 1e-13;
@@ -764,11 +764,11 @@ meshQualityControls
     minFaceWeight 0.05;
     minVolRatio 0.01;
     minTriangleTwist -1;
-    nSmoothScale 5;
+    nSmoothScale 4;
     errorReduction 0.75;
     relaxed
     {
-        maxNonOrtho 80;
+        maxNonOrtho 75;
     }
 }
 

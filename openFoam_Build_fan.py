@@ -16,6 +16,8 @@ def main():
     sim_par = True
     run_sim = True
 
+    # copy_rel_vel = False
+
 
     # Set the case directory
     base_dir = "/home/openfoam/"
@@ -64,10 +66,10 @@ def main():
     
         if mesh_par: 
             of.run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
-            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite')
+            of.run_command(f'cd {case_dir} && mpirun -np {num_processors} snappyHexMesh -parallel -overwrite', run_as_root = False)
             of.run_command(f'cd {case_dir} && reconstructParMesh -constant')
         else:
-            of.run_command(f"cd {case_dir} && snappyHexMesh -overwrite")
+            of.run_command(f"cd {case_dir} && snappyHexMesh -overwrite", run_as_root=False)
     
     
         of.run_command(f"cd {case_dir} && rm -rf 0")
@@ -76,6 +78,10 @@ def main():
 
     if write_files:
         of.create_openfoam_initial_conditions(case_dir)
+
+    # if copy_rel_vel: 
+    #     of.run_command(f"cd {case_dir} && rm -f {case_dir}system/relVelocity")
+    #     of.run_command(f"cd {base_dir} && cp {base_dir}relVelocity {case_dir}system/relVelocity")
 
     # Run the simulation in parallel (note already decomposed)
     if run_sim:
