@@ -16,9 +16,12 @@ def main():
     sim_par = True
     run_sim = True
 
+    # copy_rel_vel = False
+
 
     # Set the case directory
-    case_dir = "/home/openfoam/case/"
+    base_dir = "/home/openfoam/"
+    case_dir = base_dir + "case/"
     forces_file = 'case/postProcessing/forces/0/force.dat'
 
     if write_files:
@@ -75,6 +78,10 @@ def main():
 
     if write_files:
         of.create_openfoam_initial_conditions(case_dir)
+
+    # if copy_rel_vel: 
+    #     of.run_command(f"cd {case_dir} && rm -f {case_dir}system/relVelocity")
+    #     of.run_command(f"cd {base_dir} && cp {base_dir}relVelocity {case_dir}system/relVelocity")
 
     # Run the simulation in parallel (note already decomposed)
     if run_sim:
