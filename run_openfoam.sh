@@ -25,7 +25,6 @@ ls -l case
 
 echo "TEST2"
 whoami
-EOF
 
 su - openfoam <<EOF
 python3 openFoam_Build_fan.py "$@" || true;
