@@ -40,7 +40,7 @@ echo "TEST3C"
 ls case/dynamicCode/platforms
 echo "TEST3D"
 
-mv case/* /data/case/
-echo "Contents of /data/case:"
-ls /data/case
+# mv case/* /data/case/
+# echo "Contents of /data/case:"
+# ls /data/case
 EOF
