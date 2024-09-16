@@ -45,7 +45,7 @@ def main():
 
         # Setup the OpenFOAM case
         sim_end_time = 1 # time in seconds
-        fine_mesh_level = 3
+        fine_mesh_level = 4
         course_mesh_level = 1
         rotation_speed = 10 # radians per second
         time_step = 0.0002 # recommended setting is 0.0002
@@ -80,8 +80,6 @@ def main():
     # Run the simulation in parallel (note already decomposed)
     if run_sim:
         if sim_par:
-            # of.run_command(f"cd {case_dir}/dynamicCode/ && wmakeLnInclude") 
-            # of.run_command(f"cd {case_dir}/dynamicCode/ && wmake libso") 
             of.run_command(f"cd {case_dir} && decomposePar -force") # decompose mesh
             of.run_command(f'cd {case_dir} && mpirun -np {num_processors} pimpleFoam -parallel > log.pimpleFoam', run_as_root = False)
             of.run_command(f'cd {case_dir} && reconstructPar')
