@@ -1,5 +1,5 @@
 # Switch to root user
-# su - <<EOF
+su - <<EOF
 # chown -R openfoam:openfoam /data/
 # chown -R openfoam:openfoam /git/
 # EOF
@@ -27,7 +27,7 @@ echo "TEST2"
 whoami
 # EOF
 
-# su - openfoam <<EOF
+su - openfoam <<EOF
 python3 openFoam_Build_fan.py "$@" || true;
 
 echo "TEST3"
@@ -43,4 +43,4 @@ echo "TEST3D"
 mv case/* /data/case/
 echo "Contents of /data/case:"
 ls /data/case
-# EOF
+EOF
